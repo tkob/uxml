@@ -79,7 +79,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <INITIAL>"<" {xmlName} => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 
 <DECL>"?>" => (YYBEGIN XML; RXMLDECL);
-<DECL>{xmlS} => (S);
+<DECL>{xmlS} => (continue());
 <DECL>"version" => (XMLNAME(yytext));
 <DECL>"=" => (EQUAL);
 <DECL>"'" => (XMLAPOS);
@@ -89,7 +89,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <DECL>"standalone" => (XMLNAME(yytext));
 <DECL>[A-Za-z] ([A-Za-z0-9\._] | "-")* =>  (XMLCHARS(yytext));
 
-<STAG>{xmlS} => (S);
+<STAG>{xmlS} => (continue());
 <STAG>{xmlName} => (XMLNAME(yytext));
 <STAG>"="  => (EQUAL);
 <STAG>">"  => (YYBEGIN XML; RTAG);
