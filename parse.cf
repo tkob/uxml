@@ -48,10 +48,10 @@ Prolog2. Prolog ::= XMLDecl [Misc] ;
 -- [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
 -- [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" )
 -- [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
-XMLDecl1. XMLDecl ::= LXMLDECL RXMLDECL ;
-XMLDecl2. XMLDecl ::= LXMLDECL S RXMLDECL ;
+XMLDecl. XMLDecl ::= LXMLDECL [PseudoAttr] RXMLDECL ;
 PseudoAttr1. PseudoAttr ::= XMLNAME EQUAL XMLAPOS XMLCHARS XMLAPOS ;
 PseudoAttr2. PseudoAttr ::= XMLNAME EQUAL XMLQUOT XMLCHARS XMLQUOT ;
+separator PseudoAttr "" ;
 
 -- [27] Misc ::= Comment | PI | S
 -- TODO
