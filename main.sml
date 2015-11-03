@@ -17,8 +17,10 @@ structure Main = struct
                               | SOME n => AntlrStreamPos.mkSourcemap' n
            val trees = Parse.parse sourcemap strm
            val numParses = length trees
+           fun println s = print (s ^ "\n")
          in
            print (Int.toString numParses ^ " parse(s)\n");
+           List.app (println o Parse.Ast.showDocument) trees;
            release ();
            OS.Process.success
          end
