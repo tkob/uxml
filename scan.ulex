@@ -1,0 +1,173 @@
+%defs (
+  open Token
+  type lex_result = Token.token
+  val eof = fn () => EOF
+  
+  fun xmlDeref "&amp;" = "&"
+    | xmlDeref "&lt;" = "<"
+    | xmlDeref "&gt;" = ">"
+    | xmlDeref "&apos;" = "'"
+    | xmlDeref "&quot;" = "\""
+    | xmlDeref _ = raise Fail "unimplemented"
+  
+  fun drop n s = String.extract(s, n, NONE)
+);
+
+%name Lexer;
+%states DECL DOCTYPE XML STAG ETAG ATT_APOS ATT_QUOT CDATA PI PI_CONTENT
+XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
+;
+
+(* [2] Char ::=
+         #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] |
+         [#x10000-#x10FFFF] *)
+%let xmlChar =
+       [\u0009\u000a\u000d] | [\u0020-\ud7ff] | [\ue000-\ufffd] |
+       [\U00010000-\U0010ffff];
+
+(* [3] S ::= (#x20 | #x9 | #xD | #xA)+ *)
+%let xmlS = [\u0020\u0009\u000d\u000a]+;
+
+(* [4] NameStartChar ::=
+         ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] |
+         [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] |
+         [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] |
+         [#xFDF0-#xFFFD] | [#x10000-#xEFFFF] *)
+%let xmlNameStartChar =
+       ":" | [A-Z] | "_" | [a-z] | [\u00c0-\u00d6] | [\u00d8-\u00f6] |
+       [\u00f8-\u02ff] | [\u0370-\u037d] | [\u037f-\u1fff] | [\u200c-\u200d] |
+       [\u2070-\u218f] | [\u2c00-\u2fef] | [\u3001-\ud7ff] | [\uf900-\ufdcf] |
+       [\ufdf0-\ufffd] | [\U00010000-\U000effff];
+
+(* [4a] NameChar ::=
+          NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] |
+          [#x203F-#x2040] *)
+%let xmlNameChar =
+       {xmlNameStartChar} | "-" | "." | [0-9] | [\u00b7] | [\u0300-\u036f] |
+       [\u203f-\u2040];
+
+(* [5] Name ::= NameStartChar (NameChar)* *)
+%let xmlName = {xmlNameStartChar} {xmlNameChar}*;
+
+(* [7] Nmtoken ::= (NameChar)+ *)
+%let xmlNmtoken = {xmlNameChar}+;
+
+(* [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]* ) *)
+%let xmlCharData = [^<&]* & ~([^<&]* "]]>" [^<&]*);
+
+(* [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l')) *)
+%let piTarget = {xmlName} & ~([Xx] [Mm] [Ll]);
+
+%let xmlCharRef = "&#" [0-9]+ ";" | "&#x" [0-9a-fA-F]+ ";";
+%let xmlEntityRef = "&" {xmlName} ";";
+%let xmlReference = {xmlEntityRef} | {xmlCharRef};
+%let xmlPEReference = "%" {xmlName} ";";
+
+%let xmlEntityValue = "\"" ([^%&"] | {xmlPEReference} | {xmlReference})* "\""
+               | "'"  ([^%&'] | {xmlPEReference} | {xmlReference})* "'";
+
+%let xmlSystemLiteral = ("\"" [^"]* "\"") | ("'" [^']* "'");
+
+%let xmlPubidChar = [\032\013\010] | [a-zA-Z0-9] | [\-'\(\)\+,\.\/:\=?\;!\*#@\$_%];
+%let xmlPubidCharExceptQuot = [\032\013\010] | [a-zA-Z0-9] | [-()+,./:=?;!*#@$_%];
+%let xmlPubidLiteral = "\"" {xmlPubidChar}* "\""
+                | "'" {xmlPubidCharExceptQuot} "'";
+
+<INITIAL>[\ \t\n] => (YYBEGIN XML; continue());
+<INITIAL>"<?xml" {xmlS} => (YYBEGIN DECL; LXMLDECL);
+<INITIAL>"<!DOCTYPE" => (YYBEGIN DOCTYPE; LDOCTYPE);
+<INITIAL>"<" {xmlName} => (YYBEGIN STAG; LSTAG(drop 1 yytext));
+
+<DECL>"?>" => (YYBEGIN XML; RXMLDECL);
+<DECL>{xmlS} => (S);
+<DECL>"version" => (XMLNAME(yytext));
+<DECL>"=" => (EQUAL);
+<DECL>"'" => (XMLAPOS);
+<DECL>"\"" => (XMLQUOT);
+<DECL>"1." [0-9]+ => (XMLCHARS(yytext));
+<DECL>"encoding" => (XMLNAME(yytext));
+<DECL>"standalone" => (XMLNAME(yytext));
+<DECL>[A-Za-z] ([A-Za-z0-9\._] | "-")* =>  (XMLCHARS(yytext));
+
+<STAG>{xmlS} => (S);
+<STAG>{xmlName} => (XMLNAME(yytext));
+<STAG>"="  => (EQUAL);
+<STAG>">"  => (YYBEGIN XML; RTAG);
+<STAG>"/>" => (YYBEGIN XML; REMPTYTAG);
+<STAG>[\'] => (YYBEGIN ATT_APOS; XMLAPOS);
+<STAG>[\"] => (YYBEGIN ATT_QUOT; XMLQUOT);
+
+<ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
+<ATT_APOS>{xmlReference} => (XMLCHARS(xmlDeref yytext));
+<ATT_APOS>[\'] => (YYBEGIN STAG; XMLAPOS);
+
+<ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
+<ATT_QUOT>{xmlReference} => (XMLCHARS(xmlDeref yytext));
+<ATT_QUOT>[\"] => (YYBEGIN STAG; XMLQUOT);
+
+<XML>{xmlCharData}  => (XMLCHARS(yytext));
+<XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
+<XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
+<XML>{xmlReference} => (XMLCHARS(xmlDeref yytext));
+<XML>"<![CDATA["    => (YYBEGIN CDATA; CDSTART);
+<XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
+<XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
+<XML>"<!DOCTYPE"    => (YYBEGIN DOCTYPE; LDOCTYPE);
+
+<ETAG>{xmlS} => (S);
+<ETAG>">" => (YYBEGIN XML; RTAG);
+
+(* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' *)
+<XML_COMMENT>"-->" => (YYBEGIN XML; RXMLCOMMENT);
+<XML_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))*
+  => (XMLCHARS(yytext));
+
+(* [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char* )))? '?>' *)
+<PI>{xmlS}
+   (* White space immediately following the target name of a PI. *)
+   => (YYBEGIN PI_CONTENT; continue());
+<PI>"?>" => (YYBEGIN XML; RPI);
+<PI_CONTENT>"?>" => (YYBEGIN XML; RPI);
+<PI_CONTENT>({xmlChar} & ~"?")+ => (XMLCHARS(yytext));
+<PI_CONTENT>"?" => (XMLCHARS(yytext));
+
+(* [20] CData ::= (Char* - (Char* ']]>' Char* )) *)
+<CDATA>"]]>" => (YYBEGIN XML; CDEND);
+<CDATA>({xmlChar} & ~"]")+ => (XMLCHARS(yytext));
+<CDATA>[\]]  => (XMLCHARS(yytext));
+
+<DOCTYPE>">" => (YYBEGIN XML; RTAG);
+<DOCTYPE>{xmlS} => (S);
+<DOCTYPE>{xmlName} => (XMLNAME(yytext));
+<DOCTYPE>[\[] => (LBRACKET);
+<DOCTYPE>[\]] => (RBRACKET);
+<DOCTYPE>"<!ELEMENT"  =>(YYBEGIN ELEMENT_DECL; LELEMENTDECL );
+<DOCTYPE>"<!ATTLIST"  =>(YYBEGIN ATTLIST_DECL; LATTLISTDECL );
+<DOCTYPE>"<!ENTITY"   =>(YYBEGIN ENTITY_DECL;  LENTITYDECL  );
+<DOCTYPE>"<!NOTATION" =>(YYBEGIN NOTATION_DECL;LNOTATIONDECL);
+
+<ELEMENT_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
+<ELEMENT_DECL>{xmlS} => (S);
+<ELEMENT_DECL>{xmlName} => (XMLNAME(yytext));
+<ELEMENT_DECL>"#PCDATA" => (XMLNAME(yytext));
+<ELEMENT_DECL>"(" => (LPAREN);
+<ELEMENT_DECL>")" => (RPAREN);
+<ELEMENT_DECL>"|" => (BAR);
+<ELEMENT_DECL>"?" => (QUESTION);
+<ELEMENT_DECL>"*" => (STAR);
+<ELEMENT_DECL>"+" => (PLUS);
+<ELEMENT_DECL>"," => (COMMA);
+
+<ATTLIST_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
+<ATTLIST_DECL>{xmlS} => (S);
+<ATTLIST_DECL>{xmlName} => (XMLNAME(yytext));
+<ATTLIST_DECL>{xmlNmtoken} => (XMLNAME(yytext));
+<ATTLIST_DECL>"#REQUIRED" => (XMLNAME(yytext));
+<ATTLIST_DECL>"#IMPLIED" => (XMLNAME(yytext));
+<ATTLIST_DECL>"#FIXED" => (XMLNAME(yytext));
+<ATTLIST_DECL>"(" => (LPAREN);
+<ATTLIST_DECL>")" => (RPAREN);
+<ATTLIST_DECL>"|" => (BAR);
+<ATTLIST_DECL>"\"" ([^<&"] | {xmlReference})* "\"" => (XMLCHARS(yytext));
+<ATTLIST_DECL>"'" ([^<&'] | {xmlReference})* "'" => (XMLCHARS(yytext));
+
