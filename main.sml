@@ -39,6 +39,8 @@ structure Main = struct
   val 1 = numParses "<r/>"
   val 1 = numParses "<r />"
   val 1 = numParses "<r /> "
+  val 1 = numParses "<?xml version='1.0'?><r/>"
+  val 1 = numParses "<?xml version = '1.0' ?><r/>"
 end
 
 fun main () =
