@@ -26,6 +26,19 @@ structure Main = struct
          end
          handle e => (release (); raise e)
        end
+
+  (* unit tests *)
+  fun numParses s =
+        let
+          val strm = Lexer.streamifyReader Substring.getc (Substring.full s)
+          val sourcemap = AntlrStreamPos.mkSourcemap ()
+          val parses = Parse.parse sourcemap strm
+        in
+          length parses
+        end
+  val 1 = numParses "<r/>"
+  val 1 = numParses "<r />"
+  val 1 = numParses "<r /> "
 end
 
 fun main () =
