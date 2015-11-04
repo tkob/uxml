@@ -54,6 +54,7 @@ structure Main = struct
   val 1 = numParses "<r><c/></r>"
   val 1 = numParses "<r><c/><c/></r>"
   val 1 = numParses "<r>x<c/>y<c/>z</r>"
+  val 1 = numParses "<r><![CDATA[&><]]></r>"
 end
 
 fun main () =

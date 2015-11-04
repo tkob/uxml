@@ -114,7 +114,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 <XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
 <XML>{xmlReference} => (XMLCHARS(xmlDeref yytext));
-<XML>"<![CDATA["    => (YYBEGIN CDATA; CDSTART);
+<XML>"<![CDATA["    => (YYBEGIN CDATA; continue());
 <XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
 <XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
 <XML>"<!DOCTYPE"    => (YYBEGIN DOCTYPE; LDOCTYPE);
@@ -137,9 +137,9 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <PI_CONTENT>"?" => (XMLCHARS(yytext));
 
 (* [20] CData ::= (Char* - (Char* ']]>' Char* )) *)
-<CDATA>"]]>" => (YYBEGIN XML; CDEND);
-<CDATA>({xmlChar} & ~"]")+ => (XMLCHARS(yytext));
-<CDATA>[\]]  => (XMLCHARS(yytext));
+<CDATA>"]]>" => (YYBEGIN XML; XMLCDSECT (toString stringBuffer));
+<CDATA>({xmlChar} & ~"]")+ => (append (stringBuffer, yytext); continue ());
+<CDATA>[\]]  => (append (stringBuffer, yytext); continue ());
 
 <DOCTYPE>">" => (YYBEGIN XML; RTAG);
 <DOCTYPE>{xmlS} => (S);
