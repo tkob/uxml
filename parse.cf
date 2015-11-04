@@ -60,7 +60,19 @@ separator Misc "" ;
 
 -- [39] element ::= EmptyElemTag | STag content ETag
 EmptyElement. Element ::= EmptyElemTag ;
+Element.      Element ::= Stag Content ETag ;
 -- TODO
+
+-- [40] STag ::= '<' Name (S Attribute)* S? '>'
+-- TODO
+Stag. Stag ::= LSTAG RTAG ;
+
+-- [42] ETag ::= '</' Name S? '>'
+ETag. ETag ::= LETAG RTAG ;
+
+-- [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
+-- TODO
+Content. Content ::= ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
 -- TODO
