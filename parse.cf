@@ -79,7 +79,7 @@ ElementContent.   Content ::= Element ;
 -- ReferenceContent. Content ::= ;
 CDSectContent.    Content ::= XMLCDSECT ;
 -- PIContent.        Content ::= ;
--- COmmentContent.   Content ::= ;
+-- CommentContent.   Content ::= ;
 separator Content "" ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
