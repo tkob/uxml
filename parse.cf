@@ -61,8 +61,7 @@ separator Misc "" ;
 
 -- [39] element ::= EmptyElemTag | STag content ETag
 EmptyElement. Element ::= EmptyElemTag ;
-Element.      Element ::= Stag Content ETag ;
--- TODO
+Element.      Element ::= Stag [Content] ETag ;
 
 -- [40] STag ::= '<' Name (S Attribute)* S? '>'
 Stag. Stag ::= LSTAG [Attribute] RTAG ;
@@ -76,7 +75,13 @@ ETag. ETag ::= LETAG RTAG ;
 
 -- [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
 -- TODO
-Content. Content ::= ;
+-- CharDataContent.  Content ::= CharData ;
+ELementContent.   Content ::= Element ;
+-- ReferenceContent. Content ::= ;
+-- CDSectContent.    Content ::= ;
+-- PIContent.        Content ::= ;
+-- COmmentContent.   Content ::= ;
+separator Content "" ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
 EmptyElemTag. EmptyElemTag ::= LSTAG [Attribute] REMPTYTAG ;
