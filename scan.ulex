@@ -114,7 +114,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
 <XML>"<!DOCTYPE"    => (YYBEGIN DOCTYPE; LDOCTYPE);
 
-<ETAG>{xmlS} => (S);
+<ETAG>{xmlS} => (continue());
 <ETAG>">" => (YYBEGIN XML; RTAG);
 
 (* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' *)
