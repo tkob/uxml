@@ -10,6 +10,10 @@
     | xmlDeref "&quot;" = "\""
     | xmlDeref _ = raise Fail "unimplemented"
   
+  val stringBuffer : string list ref = ref []
+  fun append (sb, s : string) = sb := s :: (!sb)
+  fun toString sb = concat (rev (!sb)) before sb := []
+
   fun drop n s = String.extract(s, n, NONE)
 );
 
