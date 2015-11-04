@@ -4,6 +4,7 @@ token RXMLDECL ;
 token LDOCTYPE ;
 token XMLAPOS ;
 token XMLQUOT ;
+token XMLATTVALUE of string ;
 token XMLCHARS of string ;
 token XMLNAME of string ;
 token XMLNAME of string ;
@@ -34,12 +35,6 @@ token EQUAL ;
 
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
-
--- [10] AttValue ::= '"' ([^<&"] | Reference)* '"'
---                 | "'" ([^<&'] | Reference)* "'"
--- TODO
-AttValueQuot. AttValue ::= XMLQUOT XMLQUOT ;
-AttValueApos. AttValue ::= XMLAPOS XMLAPOS ;
 
 -- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
 Prolog1. Prolog ::= [Misc] ;
@@ -73,7 +68,7 @@ Element.      Element ::= Stag Content ETag ;
 Stag. Stag ::= LSTAG [Attribute] RTAG ;
 
 -- [41] Attribute ::= Name Eq AttValue
-Attribute. Attribute ::= XMLNAME EQUAL AttValue ;
+Attribute. Attribute ::= XMLNAME EQUAL XMLATTVALUE ;
 separator Attribute "" ;
 
 -- [42] ETag ::= '</' Name S? '>'

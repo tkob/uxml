@@ -98,16 +98,17 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <STAG>"="  => (EQUAL);
 <STAG>">"  => (YYBEGIN XML; RTAG);
 <STAG>"/>" => (YYBEGIN XML; REMPTYTAG);
-<STAG>[\'] => (YYBEGIN ATT_APOS; XMLAPOS);
-<STAG>[\"] => (YYBEGIN ATT_QUOT; XMLQUOT);
+<STAG>[\'] => (YYBEGIN ATT_APOS; continue());
+<STAG>[\"] => (YYBEGIN ATT_QUOT; continue());
 
-<ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
-<ATT_APOS>{xmlReference} => (XMLCHARS(xmlDeref yytext));
-<ATT_APOS>[\'] => (YYBEGIN STAG; XMLAPOS);
-
-<ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
-<ATT_QUOT>{xmlReference} => (XMLCHARS(xmlDeref yytext));
-<ATT_QUOT>[\"] => (YYBEGIN STAG; XMLQUOT);
+(* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
+<ATT_QUOT>[^<&"]+ => (append (stringBuffer, yytext); continue ()) ;
+<ATT_QUOT>{xmlReference} => (append (stringBuffer, xmlDeref yytext); continue ()) ;
+<ATT_QUOT>[\"] => (YYBEGIN STAG; XMLATTVALUE (toString stringBuffer)) ;
+(*                 | "'" ([^<&'] | Reference)* "'" *)
+<ATT_APOS>[^<&']+ => (append (stringBuffer, yytext); continue ()) ;
+<ATT_APOS>{xmlReference} => (append (stringBuffer, xmlDeref yytext); continue ()) ;
+<ATT_APOS>[\'] => (YYBEGIN STAG; XMLATTVALUE (toString stringBuffer)) ;
 
 <XML>{xmlCharData}  => (XMLCHARS(yytext));
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
