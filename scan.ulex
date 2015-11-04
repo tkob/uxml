@@ -73,7 +73,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 %let xmlPubidLiteral = "\"" {xmlPubidChar}* "\""
                 | "'" {xmlPubidCharExceptQuot} "'";
 
-<INITIAL>[\ \t\n] => (YYBEGIN XML; continue());
+<INITIAL>{xmlS}+ => (YYBEGIN XML; continue());
 <INITIAL>"<?xml" {xmlS} => (YYBEGIN DECL; LXMLDECL);
 <INITIAL>"<!DOCTYPE" => (YYBEGIN DOCTYPE; LDOCTYPE);
 <INITIAL>"<" {xmlName} => (YYBEGIN STAG; LSTAG(drop 1 yytext));
