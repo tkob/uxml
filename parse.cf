@@ -79,7 +79,7 @@ ETag. ETag ::= LETAG RTAG ;
 
 -- [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
 -- TODO
-CharDataContent.  Content ::= XMLCHARS ;
+CharDataContent.  Content ::= [Chars] ;
 ElementContent.   Content ::= Element ;
 -- ReferenceContent. Content ::= ;
 CDSectContent.    Content ::= XMLCDSECT ;
