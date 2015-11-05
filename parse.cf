@@ -89,3 +89,6 @@ separator Content "" ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
 EmptyElemTag. EmptyElemTag ::= LSTAG [Attribute] REMPTYTAG ;
+
+Chars. Chars ::= XMLCHARS ;
+separator nonempty Chars "" ;
