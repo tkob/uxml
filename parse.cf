@@ -38,7 +38,7 @@ Document. Document ::= Prolog Element [Misc] ;
 -- [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
 -- TODO
 EmptyPI. PI ::= LPI RPI ;
-PI.      PI ::= LPI XMLCHARS RPI ;
+PI.      PI ::= LPI [Chars] RPI ;
 
 -- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
 Prolog1. Prolog ::= [Misc] ;
