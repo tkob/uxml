@@ -36,7 +36,6 @@ token EQUAL ;
 Document. Document ::= Prolog Element [Misc] ;
 
 -- [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
--- TODO
 EmptyPI. PI ::= LPI RPI ;
 PI.      PI ::= LPI [Chars] RPI ;
 
