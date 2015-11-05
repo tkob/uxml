@@ -8,7 +8,17 @@
     | xmlDeref "&gt;" = ">"
     | xmlDeref "&apos;" = "'"
     | xmlDeref "&quot;" = "\""
-    | xmlDeref _ = raise Fail "unimplemented"
+    | xmlDeref r =
+        let
+          val (digitStart, radix) =
+            if String.isPrefix "&#x" r
+            then (3, StringCvt.HEX)
+            else (2, StringCvt.DEC)
+          val digits = String.extract (r, digitStart, NONE)
+          val SOME word = StringCvt.scanString (Word.scan radix) digits
+        in
+          UTF8.encode word
+        end
   
   val stringBuffer : string list ref = ref []
   fun append (sb, s : string) = sb := s :: (!sb)
