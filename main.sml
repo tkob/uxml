@@ -62,6 +62,8 @@ structure Main = struct
   val 1 = numParses "<r><?p abc??></r>"
   val 1 = numParses "<r><?p ?abc?></r>"
   val 1 = numParses "<?p abc?><r/>"
+  val 1 = numParses "<r>&amp;&gt;&lt;&apos;&quot;</r>"
+  val 1 = numParses "<r>&#x0021;&#33;</r>"
 end
 
 fun main () =
