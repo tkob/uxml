@@ -35,6 +35,10 @@ token EQUAL ;
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
 
+-- [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
+-- TODO
+EmptyPI. PI ::= LPI RPI ;
+
 -- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
 Prolog1. Prolog ::= [Misc] ;
 Prolog2. Prolog ::= XMLDecl [Misc] ;
@@ -78,7 +82,7 @@ CharDataContent.  Content ::= XMLCHARS ;
 ElementContent.   Content ::= Element ;
 -- ReferenceContent. Content ::= ;
 CDSectContent.    Content ::= XMLCDSECT ;
--- PIContent.        Content ::= ;
+PIContent.        Content ::= PI ;
 -- CommentContent.   Content ::= ;
 separator Content "" ;
 
