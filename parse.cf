@@ -83,10 +83,9 @@ separator Attribute "" ;
 ETag. ETag ::= LETAG RTAG ;
 
 -- [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
--- TODO
 CharDataContent.  Content ::= Chars ;
 ElementContent.   Content ::= Element ;
--- ReferenceContent. Content ::= ;
+-- There is no ReferenceContent since references become XMLCHARS within lexing
 CDSectContent.    Content ::= XMLCDSECT ;
 PIContent.        Content ::= PI ;
 CommentContent.   Content ::= Comment ;
