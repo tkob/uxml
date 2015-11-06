@@ -35,6 +35,10 @@ token EQUAL ;
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
 
+-- [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
+EmptyComment. Comment ::= LXMLCOMMENT RXMLCOMMENT ;
+Comment.      Comment ::= LXMLCOMMENT XMLCHARS RXMLCOMMENT ;
+
 -- [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
 EmptyPI. PI ::= LPI RPI ;
 PI.      PI ::= LPI [Chars] RPI ;
@@ -84,7 +88,7 @@ ElementContent.   Content ::= Element ;
 -- ReferenceContent. Content ::= ;
 CDSectContent.    Content ::= XMLCDSECT ;
 PIContent.        Content ::= PI ;
--- CommentContent.   Content ::= ;
+CommentContent.   Content ::= Comment ;
 separator Content "" ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
