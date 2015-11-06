@@ -135,7 +135,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 
 (* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' *)
 <XML_COMMENT>"-->" => (YYBEGIN XML; RXMLCOMMENT);
-<XML_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))*
+<XML_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+
   => (XMLCHARS(yytext));
 
 (* [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char* )))? '?>' *)
