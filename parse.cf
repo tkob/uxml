@@ -63,8 +63,9 @@ separator PseudoAttr "" ;
 
 -- [27] Misc ::= Comment | PI | S
 -- TODO
-PIMisc. Misc ::= PI ;
-SMisc.  Misc ::= XMLCHARS ;
+CommetnMisc. Misc ::= Comment ;
+PIMisc.      Misc ::= PI ;
+SMisc.       Misc ::= XMLCHARS ;
 separator Misc "" ;
 
 -- [39] element ::= EmptyElemTag | STag content ETag

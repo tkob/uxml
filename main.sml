@@ -66,6 +66,7 @@ structure Main = struct
   val 1 = numParses "<r>&#x0021;&#33;</r>"
   val 1 = numParses "<r><!-- declarations for <head> & <body> --></r>"
   val 1 = numParses "<r><!----></r>"
+  val 1 = numParses "<!-- declarations for <head> & <body> --><r/>"
 end
 
 fun main () =
