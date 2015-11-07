@@ -5,4 +5,5 @@ $(SML_LIB)/mllpt-lib/mllpt-lib.mlb
 
 parse.sml
 scan.ulex.sml
+uxml.sml
 main.sml

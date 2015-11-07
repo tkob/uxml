@@ -1,5 +1,3 @@
-structure Parse = ParseFun(Lexer)
-
 structure Main = struct
   fun main (_, arguments) =
        let

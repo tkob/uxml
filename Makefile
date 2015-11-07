@@ -1,6 +1,6 @@
 MLULEX = ml-ulex
 
-main: parse.sml scan.ulex.sml main.sml main.mlb
+main: parse.sml scan.ulex.sml uxml.sml main.sml main.mlb
 	mlton main.mlb
 
 parse.sml: parse.cf
