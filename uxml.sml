@@ -2,13 +2,16 @@ structure Parse = ParseFun(Lexer)
 
 structure UXML = struct
   type pi = { target : string, content : string }
-  type attribute = { name : string, attvalue : string }
+  type attribute = { ns : string, name : string, attvalue : string }
+  type nsdecl = { nsattname : string, nsattvalue : string }
   datatype misc = Comment of string | PI of pi
   type prolog = { xmldecl : attribute list, misc : misc list }
 
   datatype element = Element of {
+                       ns : string,
                        name : string,
                        attributes : attribute list,
+                       nsdecls : nsdecl list,
                        contents : content list }
        and content = CharData of string
                    | ElementContent of element
@@ -20,7 +23,7 @@ structure UXML = struct
 
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
         { prolog = fromProlog prolog,
-          root = fromElement root,
+          root = fromElement [] root,
           misc = fromMisc' misc }
   and fromComment (Parse.Ast.EmptyComment (span)) = ""
     | fromComment (Parse.Ast.Comment (span, comment)) = comment
@@ -43,32 +46,43 @@ structure UXML = struct
     | fromMisc (Parse.Ast.PIMisc (span, pi)) = PI (fromPI pi)
     | fromMisc (Parse.Ast.SMisc (span, s)) = raise Fail "TODO"
   and fromMisc' xs = (map fromMisc xs)
-  and fromElement (Parse.Ast.EmptyElement (span, emptyElemTag)) = fromEmptyElemTag emptyElemTag
-    | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
+  and fromElement bindings (Parse.Ast.EmptyElement (span, emptyElemTag)) =
+        fromEmptyElemTag bindings emptyElemTag
+    | fromElement bindings (Parse.Ast.Element (span, sTag, contents, eTag)) =
         let
-          val (sTagName, attributes) = fromSTag sTag
-          val contents = fromContent' contents
-          val eTagName = fromETag eTag
+          val (sTagName, attributes) = fromSTag bindings sTag
+          val contents = fromContent' bindings contents
+          val eTagName = fromETag bindings eTag
+          (* TODO: WFC: Element Type Match *)
         in
-          raise Fail "TODO"
+          Element { ns = "", (* TODO *)
+                    name = sTagName,
+                    attributes = attributes,
+                    nsdecls = [], (* TODO *)
+                    contents = contents }
         end
-  and fromSTag (Parse.Ast.Stag (span, name, attributes)) = (name, fromAttribute' attributes)
-  and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
-        { name = name, attvalue = attvalue }
-  and fromAttribute' xs = map fromAttribute xs
-  and fromETag (Parse.Ast.ETag (span, name)) = name
-  and fromContent (Parse.Ast.CharDataContent (span, chars)) =
+  and fromSTag bindings (Parse.Ast.Stag (span, name, attributes)) =
+        (name, fromAttribute' bindings attributes)
+  and fromAttribute bindings (Parse.Ast.Attribute (span, name, attvalue)) =
+        { ns = "", (* TODO *)
+          name = name,
+          attvalue = attvalue }
+  and fromAttribute' bindings xs = map (fromAttribute bindings) xs
+  and fromETag bindings (Parse.Ast.ETag (span, name)) = name
+  and fromContent bindings (Parse.Ast.CharDataContent (span, chars)) =
         CharData (fromChars chars)
-    | fromContent (Parse.Ast.ElementContent (span, element)) =
-        ElementContent (fromElement element)
-    | fromContent (Parse.Ast.CDSectContent (span, cdsect)) = CDSect cdsect
-    | fromContent (Parse.Ast.PIContent (span, pi)) = PIContent (fromPI pi)
-    | fromContent (Parse.Ast.CommentContent (span, comment)) =
+    | fromContent bindings (Parse.Ast.ElementContent (span, element)) =
+        ElementContent (fromElement bindings element)
+    | fromContent bindings (Parse.Ast.CDSectContent (span, cdsect)) = CDSect cdsect
+    | fromContent bindings (Parse.Ast.PIContent (span, pi)) = PIContent (fromPI pi)
+    | fromContent bindings (Parse.Ast.CommentContent (span, comment)) =
         CommentContent (fromComment comment)
-  and fromContent' xs = map fromContent xs
-  and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
-        Element { name = name,
-                  attributes = fromAttribute' attributes,
+  and fromContent' bindings xs = map (fromContent bindings) xs
+  and fromEmptyElemTag bindings (Parse.Ast.EmptyElemTag (span, name, attributes)) =
+        Element { ns = "", (* TODO *)
+                  name = name,
+                  attributes = fromAttribute' bindings attributes,
+                  nsdecls = [], (* TODO *)
                   contents = [] }
   and fromChars (Parse.Ast.Chars (span, chars)) = chars
   and fromChars' xs = concat (map fromChars xs)
