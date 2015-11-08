@@ -67,9 +67,9 @@ structure UXML = struct
         fromEmptyElemTag bindings emptyElemTag
     | fromElement bindings (Parse.Ast.Element (span, sTag, contents, eTag)) =
         let
-          val (sTagName, attributes) = fromSTag bindings sTag
-          val contents = fromContent' bindings contents
-          val eTagName = fromETag bindings eTag
+          val (sTagName, bindings', attributes, nsdecls) = fromSTag bindings sTag
+          val contents = fromContent' bindings' contents
+          val eTagName = fromETag bindings' eTag
           (* TODO: WFC: Element Type Match *)
         in
           Element { ns = "", (* TODO *)
@@ -79,12 +79,45 @@ structure UXML = struct
                     contents = contents }
         end
   and fromSTag bindings (Parse.Ast.Stag (span, name, attributes)) =
-        (name, fromAttribute' bindings attributes)
-  and fromAttribute bindings (Parse.Ast.Attribute (span, name, attvalue)) =
-        { ns = "", (* TODO *)
-          name = name,
-          attvalue = attvalue }
-  and fromAttribute' bindings xs = map (fromAttribute bindings) xs
+        let
+          val (prefix, name) =
+            case splitName name of
+                 SOME x => x
+               | NONE => raise Fail "invalid QName"
+          val (bindings', attributes, nsdecls) = fromAttribute' prefix bindings attributes
+        in
+          (name, bindings', attributes, nsdecls)
+        end
+  and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
+        case splitName name of
+             NONE => raise Fail "invalid QName"
+           | SOME (prefix, name) => (prefix, name, attvalue)
+  and fromAttribute' elementPrefix bindings xs =
+        let
+          val triples = map fromAttribute xs
+          fun isNsdecl (prefix, name, _) =
+                prefix = "xmlns" orelse name = "xmlns"
+          fun tripleToNsdecl ("", "xmlns", value) =
+                { nsattname = "", nsattvalue = value }
+            | tripleToNsdecl (prefix, name, value) =
+                { nsattname = name, nsattvalue = value }
+          val nsdecls = map tripleToNsdecl (List.filter isNsdecl triples)
+          val bindings' = nsdecls @ bindings
+          (* TODO: error handling *)
+          val SOME elementNs = lookupNs (elementPrefix, bindings')
+          fun resolveNs (prefix, name, value) =
+                let
+                  (* TODO: error handling *)
+                  val SOME ns = lookupNs (prefix, bindings')
+                in
+                  { ns = if ns = "" then elementNs else ns,
+                    name = name,
+                    attvalue = value }
+                end
+          val attributes = map resolveNs (List.filter (negate isNsdecl) triples)
+        in
+          (bindings', attributes, nsdecls)
+        end
   and fromETag bindings (Parse.Ast.ETag (span, name)) = name
   and fromContent bindings (Parse.Ast.CharDataContent (span, chars)) =
         CharData (fromChars chars)
@@ -96,11 +129,19 @@ structure UXML = struct
         CommentContent (fromComment comment)
   and fromContent' bindings xs = map (fromContent bindings) xs
   and fromEmptyElemTag bindings (Parse.Ast.EmptyElemTag (span, name, attributes)) =
-        Element { ns = "", (* TODO *)
-                  name = name,
-                  attributes = fromAttribute' bindings attributes,
-                  nsdecls = [], (* TODO *)
-                  contents = [] }
+        let
+          val (prefix, name) =
+            case splitName name of
+                 SOME x => x
+               | NONE => raise Fail "invalid QName"
+          val (bindings', attributes, nsdecls) = fromAttribute' prefix bindings attributes
+        in
+          Element { ns = "", (* TODO *)
+                    name = name,
+                    attributes = attributes,
+                    nsdecls = nsdecls,
+                    contents = [] }
+        end
   and fromChars (Parse.Ast.Chars (span, chars)) = chars
   and fromChars' xs = concat (map fromChars xs)
 end
