@@ -95,9 +95,9 @@ structure UXML = struct
         { xmldecl = fromXMLDecl xmldecl, misc = fromMisc' misc }
   and fromXMLDecl (Parse.Ast.XMLDecl (span, attributes)) = fromPseudoAttr' attributes
   and fromPseudoAttr (Parse.Ast.PseudoAttr1 (span, name, attvalue)) =
-        { name = name, attvalue = attvalue }
+        { ns = "", name = name, attvalue = attvalue }
     | fromPseudoAttr (Parse.Ast.PseudoAttr2 (span, name, attvalue)) =
-        { name = name, attvalue = attvalue }
+        { ns = "", name = name, attvalue = attvalue }
   and fromPseudoAttr' xs = map fromPseudoAttr xs
   and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
         Comment (fromComment comment)
