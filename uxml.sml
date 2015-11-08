@@ -33,6 +33,11 @@ structure UXML = struct
              | _ => raise Fail "invalid QName"
         end
 
+  fun lookupNs (prefix, []) = NONE
+    | lookupNs (prefix, {nsattname, nsattvalue}::nsdecls) =
+        if prefix = nsattname then SOME nsattvalue
+        else lookupNs (prefix, nsdecls)
+
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
         { prolog = fromProlog prolog,
           root = fromElement [] root,
