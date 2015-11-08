@@ -21,6 +21,16 @@ structure UXML = struct
 
   type document = { prolog : prolog, root : element, misc : misc list }
 
+  fun splitName name =
+        let
+          val fields = String.fields (fn c => c = #":") name
+        in
+          case fields of
+               [name] => ("", name)
+             | [prefix, name] => (prefix, name)
+             | _ => raise Fail "invalid QName"
+        end
+
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
         { prolog = fromProlog prolog,
           root = fromElement [] root,
