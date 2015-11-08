@@ -16,9 +16,10 @@ structure Main = struct
            val trees = Parse.parse sourcemap strm
            val numParses = length trees
            fun println s = print (s ^ "\n")
+           val uxmls = map UXML.fromDocument trees
          in
            print (Int.toString numParses ^ " parse(s)\n");
-           List.app (println o Parse.Ast.showDocument) trees;
+           List.app (println o UXML.showDocument) uxmls;
            release ();
            OS.Process.success
          end
