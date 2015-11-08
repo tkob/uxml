@@ -21,6 +21,47 @@ structure UXML = struct
 
   type document = { prolog : prolog, root : element, misc : misc list }
 
+  fun showDocument {prolog, root, misc} =
+        "{prolog = " ^ showProlog prolog ^
+        ", root = " ^ showElement root ^
+        ", misc = [" ^ String.concatWith "," (map showMisc misc) ^
+        "]}"
+  and showProlog {xmldecl, misc} =
+        "{xmldecl = [" ^ String.concatWith ", " (map showAttribute xmldecl) ^
+        "], misc = [" ^ String.concatWith "," (map showMisc misc) ^
+        "]}"
+  and showMisc (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
+    | showMisc (PI pi) = "(PI " ^ showPi pi ^ ")"
+  and showPi {target, content} =
+        "{target = " ^ target ^
+        ", content = \"" ^ String.toString content ^
+        "\"}"
+  and showElement (Element {ns, name, attributes, nsdecls, contents}) =
+        "(Element {ns = " ^ ns ^
+        ", name = " ^ name ^
+        ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
+        "], nsdecls = [" ^ String.concatWith ", " (map showNsdecl nsdecls) ^
+        "], contents = [" ^ String.concatWith "," (map showContent contents) ^
+        "]})"
+  and showAttribute {ns, name, attvalue} =
+        "{ns = " ^ ns ^
+        ", name = " ^ name ^
+        ", attvalue = \"" ^ String.toString attvalue ^
+        "\"}"
+  and showNsdecl {nsattname, nsattvalue} =
+        "{nsattname = " ^ nsattname ^
+        ", nsattvalue = \"" ^ String.toString nsattvalue ^
+        "\"}"
+  and showContent (CharData charData) =
+        "(CharData \"" ^ String.toString charData ^ "\")"
+    | showContent (ElementContent element) =
+        "(ElementContent " ^ showElement element ^ ")"
+    | showContent (CDSect cdsect) =
+        "(CDSect \"" ^ String.toString cdsect ^ "\")"
+    | showContent (PIContent pi) = "(PIContent " ^ showPi pi ^ ")"
+    | showContent (CommentContent comment) =
+        "(CommentContent \"" ^ String.toString comment ^ "\")"
+
   fun negate pred = (fn x => not (pred x))
 
   fun splitName name =
