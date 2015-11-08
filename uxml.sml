@@ -81,7 +81,7 @@ structure UXML = struct
 
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
         { prolog = fromProlog prolog,
-          root = fromElement [] root,
+          root = fromElement [{nsattname = "", nsattvalue = ""}] root,
           misc = fromMisc' misc }
   and fromComment (Parse.Ast.EmptyComment (span)) = ""
     | fromComment (Parse.Ast.Comment (span, comment)) = comment
