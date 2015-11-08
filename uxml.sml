@@ -28,9 +28,9 @@ structure UXML = struct
           val fields = String.fields (fn c => c = #":") name
         in
           case fields of
-               [name] => ("", name)
-             | [prefix, name] => (prefix, name)
-             | _ => raise Fail "invalid QName"
+               [name] => SOME ("", name)
+             | [prefix, name] => SOME (prefix, name)
+             | _ => NONE
         end
 
   fun lookupNs (prefix, []) = NONE
