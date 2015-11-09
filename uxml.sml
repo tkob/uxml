@@ -79,6 +79,15 @@ structure UXML = struct
         if prefix = nsattname then SOME nsattvalue
         else lookupNs (prefix, nsdecls)
 
+  fun parse input1 instream =
+        let
+          val strm = Lexer.streamifyReader input1 instream
+          val sourcemap = AntlrStreamPos.mkSourcemap ()
+          val parses = Parse.parse sourcemap strm
+        in
+          parses
+        end
+
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
         { prolog = fromProlog prolog,
           root = fromElement [{nsattname = "", nsattvalue = ""}] root,

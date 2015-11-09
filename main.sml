@@ -29,9 +29,7 @@ structure Main = struct
   (* unit tests *)
   fun numParses s =
         let
-          val strm = Lexer.streamifyReader Substring.getc (Substring.full s)
-          val sourcemap = AntlrStreamPos.mkSourcemap ()
-          val parses = Parse.parse sourcemap strm
+          val parses = UXML.parse Substring.getc (Substring.full s)
         in
           length parses
         end
