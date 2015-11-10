@@ -9,7 +9,7 @@ structure Main = struct
                if Option.isSome fileName then TextIO.closeIn ins else ()
        in
          let
-           val strm = Lexer.streamifyInstream ins
+           val strm = UXMLLexer.streamifyInstream ins
            val sourcemap = case fileName of
                                 NONE => AntlrStreamPos.mkSourcemap ()
                               | SOME n => AntlrStreamPos.mkSourcemap' n

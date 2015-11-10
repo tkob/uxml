@@ -1,4 +1,4 @@
-structure Parse = ParseFun(Lexer)
+structure Parse = ParseFun(UXMLLexer)
 
 structure UXML = struct
   type pi = { target : string, content : string }
@@ -81,7 +81,7 @@ structure UXML = struct
 
   fun parse input1 instream =
         let
-          val strm = Lexer.streamifyReader input1 instream
+          val strm = UXMLLexer.streamifyReader input1 instream
           val sourcemap = AntlrStreamPos.mkSourcemap ()
           val parses = Parse.parse sourcemap strm
         in
