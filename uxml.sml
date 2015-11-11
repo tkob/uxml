@@ -109,10 +109,12 @@ structure UXML = struct
         { ns = "", name = name, attvalue = attvalue }
   and fromPseudoAttr' xs = map fromPseudoAttr xs
   and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
-        Comment (fromComment comment)
-    | fromMisc (Parse.Ast.PIMisc (span, pi)) = PI (fromPI pi)
-    | fromMisc (Parse.Ast.SMisc (span, s)) = raise Fail "TODO"
-  and fromMisc' xs = (map fromMisc xs)
+        SOME (Comment (fromComment comment))
+    | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (PI (fromPI pi))
+    | fromMisc (Parse.Ast.SMisc (span, s)) =
+        if List.all Char.isSpace (explode s) then NONE
+        else raise Fail "non-space char in misc"
+  and fromMisc' xs = (List.mapPartial fromMisc xs)
   and fromElement bindings (Parse.Ast.EmptyElement (span, emptyElemTag)) =
         fromEmptyElemTag bindings emptyElemTag
     | fromElement bindings (Parse.Ast.Element (span, sTag, contents, eTag)) =
