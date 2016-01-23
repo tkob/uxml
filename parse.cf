@@ -8,6 +8,7 @@ token XMLCHARS of string ;
 token XMLCDSECT of string ;
 token XMLNAME of string ;
 token XMLENTITYREF of string ;
+token XMLPEREF of string ;
 token LSTAG of string ;
 token RTAG ;
 token REMPTYTAG ;
@@ -71,9 +72,9 @@ Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME LBRACKET [IntSubset] RBRACKET RTA
 -- [28a] DeclSep ::= PEReference | S
 -- [28b] intSubset ::= (markupdecl | DeclSep)*
 -- [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment
--- TODO: DeclSep. IntSubset ::= ...
 -- TODO: PI. IntSubset ::= ...
 -- TODO: Comment. IntSubset ::= ...
+PEReferenceIntSubset. IntSubset ::= XMLPEREF ;
 ElementdeclIntSubset. IntSubset ::= Elementdecl ;
 AttlistDeclIntSubset. IntSubset ::= AttlistDecl ;
 EntityDeclIntSubset.  IntSubset ::= EntityDecl ;

@@ -177,6 +177,7 @@ DOCTYPE_COMMENT
 <DOCTYPE>">" => (YYBEGIN XML; RTAG);
 <DOCTYPE>{xmlS} => (continue());
 <DOCTYPE>{xmlName} => (XMLNAME(yytext));
+<DOCTYPE>{xmlPEReference} => (XMLPEREF(yytext));
 <DOCTYPE>"PUBLIC" => (PUBLIC);
 <DOCTYPE>"SYSTEM" => (SYSTEM);
 <DOCTYPE>[\[] => (LBRACKET);
