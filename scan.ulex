@@ -220,8 +220,8 @@ DOCTYPE_COMMENT
 <ENTITY_DECL>"NDATA" => (NDATA);
 <ENTITY_DECL>{xmlName} => (XMLNAME(yytext));
 <ENTITY_DECL>"%" => (PERCENT);
-<ENTITY_DECL>"\"" ([^%&"] | {xmlPEReference} | {xmlReference})* "\"" => (XMLCHARS(yytext));
-<ENTITY_DECL>"'" ([^%&'] | {xmlPEReference} | {xmlReference})* "'" => (XMLCHARS(yytext));
+<ENTITY_DECL>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
+<ENTITY_DECL>"'" ([^'])* "'" => (XMLCHARS(yytext));
 
 <NOTATION_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <NOTATION_DECL>{xmlS} => (continue());
