@@ -1,4 +1,8 @@
 Group
+  structure AntlrStreamPos
+  structure UXML
+  structure UXMLLexer
+  structure Token
 is
   $/basis.cm
   $/smlnj-lib.cm
