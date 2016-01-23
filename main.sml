@@ -25,47 +25,6 @@ structure Main = struct
          end
          handle e => (release (); raise e)
        end
-
-  (* unit tests *)
-  fun numParses s =
-        let
-          val parses = UXML.parse Substring.getc (Substring.full s)
-        in
-          length parses
-        end
-  val 1 = numParses "<r/>"
-  val 1 = numParses "<r />"
-  val 1 = numParses "<r /> "
-  val 1 = numParses "<?xml version='1.0'?><r/>"
-  val 1 = numParses "<?xml version = '1.0' ?><r/>"
-  val 1 = numParses "<?xml version=\"1.0\"?><r/>"
-  val 1 = numParses "<?xml version = \"1.0\" ?><r/>"
-  val 1 = numParses "<r></r>"
-  val 1 = numParses "<r ></r >"
-  val 1 = numParses "<r att1=''></r>"
-  val 1 = numParses "<r att1=''/>"
-  val 1 = numParses "<r att1='' ></r>"
-  val 1 = numParses "<r att1='' />"
-  val 1 = numParses "<r att1=\"\"/>"
-  val 1 = numParses "<r att1='' att2=''/>"
-  val 1 = numParses "<r><c/></r>"
-  val 1 = numParses "<r><c/><c/></r>"
-  val 1 = numParses "<r>x<c/>y<c/>z</r>"
-  val 1 = numParses "<r><![CDATA[&><]]></r>"
-  val 1 = numParses "<r><?p?></r>"
-  val 1 = numParses "<r><?p ?></r>"
-  val 1 = numParses "<r><?p abc?></r>"
-  val 1 = numParses "<r><?p ??></r>"
-  val 1 = numParses "<r><?p abc??></r>"
-  val 1 = numParses "<r><?p ?abc?></r>"
-  val 1 = numParses "<?p abc?><r/>"
-  val 1 = numParses "<r/><?p abc?>"
-  val 1 = numParses "<r>&amp;&gt;&lt;&apos;&quot;</r>"
-  val 1 = numParses "<r>&#x0021;&#33;</r>"
-  val 1 = numParses "<r><!-- declarations for <head> & <body> --></r>"
-  val 1 = numParses "<r><!----></r>"
-  val 1 = numParses "<!-- declarations for <head> & <body> --><r/>"
-  val 1 = numParses "<r/><!-- declarations for <head> & <body> -->"
 end
 
 fun main () =
