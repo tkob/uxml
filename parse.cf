@@ -31,6 +31,9 @@ token PLUS ;
 token COMMA ;
 token EQUAL ;
 token PERCENT ;
+token PUBLIC ;
+token SYSTEM ;
+token NDATA ;
 
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
@@ -155,15 +158,29 @@ separator AttDef "" ;
 -- [70] EntityDecl ::= GEDecl | PEDecl
 -- [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
 -- [72] PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
+GEDecl. EntityDecl ::= LENTITYDECL XMLNAME EntityDef RTAG ;
+PEDecl. EntityDecl ::= LENTITYDECL PERCENT XMLNAME PEDef RTAG ;
+
 -- [73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
+EntityValueEntityDecl. EntityDef ::= XMLCHARS ;
+ExternalIDEntityDecl.  EntityDef ::= ExternalID ;
+NDataDeclEntityDecl.   EntityDef ::= ExternalID NDataDecl ;
+
 -- [74] PEDef ::= EntityValue | ExternalID
-GEDecl. EntityDecl ::= LENTITYDECL XMLNAME XMLCHARS RTAG ;
-PEDecl. EntityDecl ::= LENTITYDECL PERCENT XMLNAME XMLCHARS RTAG ;
--- TODO: ExternalID and NDataDecl
+EntityValuePEDef. PEDef ::= XMLCHARS ;
+ExternalIDPEDef.  PEDef ::= ExternalID ;
+
+-- [75] ExternalID ::= 'SYSTEM' S SystemLiteral
+--                   | 'PUBLIC' S PubidLiteral S SystemLiteral
+SystemExternalID. ExternalID ::= SYSTEM XMLCHARS ;
+PublicExternalID. ExternalID ::= PUBLIC XMLCHARS XMLCHARS ;
+
+-- [76] NDataDecl ::= S 'NDATA' S Name
+NDataDecl. NDataDecl ::= NDATA XMLNAME ;
 
 -- [82] NotationDecl ::= '<!NOTATION' S Name S (ExternalID | PublicID) S? '>'
+ExternalIDNotationDecl. NotationDecl ::= LNOTATIONDECL XMLNAME ExternalID RTAG ;
 PublicIDNotationDecl.   NotationDecl ::= LNOTATIONDECL XMLNAME PublicID RTAG ;
--- TODO: ExternalID
 
 -- [83] PublicID ::= 'PUBLIC' S PubidLiteral
 PublicID. PublicID ::= XMLNAME XMLCHARS ;
