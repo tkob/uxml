@@ -184,7 +184,7 @@ ExternalIDNotationDecl. NotationDecl ::= LNOTATIONDECL XMLNAME ExternalID RTAG ;
 PublicIDNotationDecl.   NotationDecl ::= LNOTATIONDECL XMLNAME PublicID RTAG ;
 
 -- [83] PublicID ::= 'PUBLIC' S PubidLiteral
-PublicID. PublicID ::= XMLNAME XMLCHARS ;
+PublicID. PublicID ::= PUBLIC XMLCHARS ;
 
 Chars. Chars ::= XMLCHARS ;
 separator nonempty Chars "" ;
