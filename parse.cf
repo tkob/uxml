@@ -31,6 +31,7 @@ token STAR ;
 token PLUS ;
 token COMMA ;
 token EQUAL ;
+token PERCENT ;
 
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
@@ -65,10 +66,10 @@ Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME LBRACKET [IntSubset] RBRACKET RTA
 -- TODO: DeclSep. IntSubset ::= ...
 -- TODO: PI. IntSubset ::= ...
 -- TODO: Comment. IntSubset ::= ...
--- TODO: EntityDecl. IntSubset ::= ...
 -- TODO: NotationDecl. IntSubset ::= ...
 ElementdeclIntSubset. IntSubset ::= Elementdecl ;
 AttlistDeclIntSubset. IntSubset ::= AttlistDecl ;
+EntityDeclIntSubset.  IntSubset ::= EntityDecl ;
 separator IntSubset "" ;
 
 -- [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
@@ -145,6 +146,15 @@ RparenAttDef. AttDef ::= RPAREN ;
 BarAttDef. AttDef ::= BAR ;
 XmlcharsAttDef. AttDef ::= XMLCHARS ;
 separator AttDef "" ;
+
+-- [70] EntityDecl ::= GEDecl | PEDecl
+-- [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
+-- [72] PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
+-- [73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
+-- [74] PEDef ::= EntityValue | ExternalID
+GEDecl. EntityDecl ::= LENTITYDECL XMLNAME XMLCHARS RTAG ;
+PEDecl. EntityDecl ::= LENTITYDECL PERCENT XMLNAME XMLCHARS RTAG ;
+-- TODO: ExternalID and NDataDecl
 
 Chars. Chars ::= XMLCHARS ;
 separator nonempty Chars "" ;

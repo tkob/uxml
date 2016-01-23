@@ -195,3 +195,9 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <ATTLIST_DECL>"\"" ([^<&"] | {xmlReference})* "\"" => (XMLCHARS(yytext));
 <ATTLIST_DECL>"'" ([^<&'] | {xmlReference})* "'" => (XMLCHARS(yytext));
 
+<ENTITY_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
+<ENTITY_DECL>{xmlS} => (continue());
+<ENTITY_DECL>{xmlName} => (XMLNAME(yytext));
+<ENTITY_DECL>"%" => (PERCENT);
+<ENTITY_DECL>"\"" ([^%&"] | {xmlPEReference} | {xmlReference})* "\"" => (XMLCHARS(yytext));
+<ENTITY_DECL>"'" ([^%&'] | {xmlPEReference} | {xmlReference})* "'" => (XMLCHARS(yytext));
