@@ -10,6 +10,19 @@
     | isEntityRef "&quot;" = false
     | isEntityRef r = not (String.isPrefix "&#" r)
 
+  fun encode word =
+        let
+          val w2c = Char.chr o Word.toInt
+        in
+          if Word.< (word, 0wx10000) then UTF8.encode word
+          else
+            String.implode [
+              w2c (Word.orb (0wxf0, Word.>> (word, 0w18))),
+              w2c (Word.orb (0wx80, Word.andb (Word.>> (word, 0w12), 0wx3f))),
+              w2c (Word.orb (0wx80, Word.andb (Word.>> (word, 0w6), 0wx3f))),
+              w2c (Word.orb (0wx80, Word.andb (word, 0wx3f)))]
+        end
+
   fun xmlDeref "&amp;" = "&"
     | xmlDeref "&lt;" = "<"
     | xmlDeref "&gt;" = ">"
@@ -24,7 +37,7 @@
           val digits = String.extract (r, digitStart, NONE)
           val SOME word = StringCvt.scanString (Word.scan radix) digits
         in
-          UTF8.encode word
+          encode word
         end
   
   val stringBuffer : string list ref = ref []
