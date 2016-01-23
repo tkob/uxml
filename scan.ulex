@@ -3,6 +3,13 @@
   type lex_result = Token.token
   val eof = fn () => EOF
   
+  fun isEntityRef "&amp;" = false
+    | isEntityRef "&lt;" = false
+    | isEntityRef "&gt;" = false
+    | isEntityRef "&apos;" = false
+    | isEntityRef "&quot;" = false
+    | isEntityRef r = not (String.isPrefix "&#" r)
+
   fun xmlDeref "&amp;" = "&"
     | xmlDeref "&lt;" = "<"
     | xmlDeref "&gt;" = ">"
@@ -125,7 +132,7 @@ XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 <XML>{xmlCharData}  => (XMLCHARS(yytext));
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 <XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
-<XML>{xmlReference} => (XMLCHARS(xmlDeref yytext));
+<XML>{xmlReference} => (if isEntityRef yytext then XMLENTITYREF yytext else XMLCHARS(xmlDeref yytext));
 <XML>"<![CDATA["    => (YYBEGIN CDATA; continue());
 <XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
 <XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));

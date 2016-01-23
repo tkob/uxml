@@ -8,7 +8,7 @@ token XMLATTVALUE of string ;
 token XMLCHARS of string ;
 token XMLCDSECT of string ;
 token XMLNAME of string ;
-token XMLNAME of string ;
+token XMLENTITYREF of string ;
 token LSTAG of string ;
 token RTAG ;
 token REMPTYTAG ;
@@ -104,7 +104,7 @@ ETag. ETag ::= LETAG RTAG ;
 -- [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
 CharDataContent.  Content ::= Chars ;
 ElementContent.   Content ::= Element ;
--- There is no ReferenceContent since references become XMLCHARS within lexing
+ReferenceContent. Content ::= XMLENTITYREF ;
 CDSectContent.    Content ::= XMLCDSECT ;
 PIContent.        Content ::= PI ;
 CommentContent.   Content ::= Comment ;
