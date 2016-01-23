@@ -44,15 +44,33 @@ EmptyPI. PI ::= LPI RPI ;
 PI.      PI ::= LPI [Chars] RPI ;
 
 -- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
+-- Note: ALthough this rule allows at most one occurence of doctypedecl,
+--       we regard doctypedecl as a Misc to simplify syntax.
 Prolog1. Prolog ::= [Misc] ;
 Prolog2. Prolog ::= XMLDecl [Misc] ;
--- Prolog3. Prolog ::= [Misc] DoctypedeclOpt;
--- Prolog4. Prolog ::= XMLDecl [Misc] DoctypedeclOpt;
 
 -- [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
 -- [24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
 -- [25] Eq ::= S? '=' S?
 -- [26] VersionNum ::= '1.' [0-9]+
+
+-- [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
+-- TODO: ExternalID
+Doctypedecl1. Doctypedecl ::= LDOCTYPE XMLNAME RTAG ;
+Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME LBRACKET [IntSubset] RBRACKET RTAG ;
+
+-- [28a] DeclSep ::= PEReference | S
+-- [28b] intSubset ::= (markupdecl | DeclSep)*
+-- [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment
+-- TODO: DeclSep. IntSubset ::= ...
+-- TODO: PI. IntSubset ::= ...
+-- TODO: Comment. IntSubset ::= ...
+-- TODO: EntityDecl. IntSubset ::= ...
+-- TODO: NotationDecl. IntSubset ::= ...
+ElementdeclIntSubset. IntSubset ::= Elementdecl ;
+-- TODO: AttlistDecl. IntSubset ::= AttlistDecl ;
+separator IntSubset "" ;
+
 -- [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
 -- [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" )
 -- [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
@@ -66,6 +84,7 @@ separator PseudoAttr "" ;
 CommetnMisc. Misc ::= Comment ;
 PIMisc.      Misc ::= PI ;
 SMisc.       Misc ::= XMLCHARS ;
+DoctypeMisc. Misc ::= Doctypedecl ;
 separator Misc "" ;
 
 -- [39] element ::= EmptyElemTag | STag content ETag
@@ -93,6 +112,20 @@ separator Content "" ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
 EmptyElemTag. EmptyElemTag ::= LSTAG [Attribute] REMPTYTAG ;
+
+-- [45] elementdecl ::= '<!ELEMENT' S Name S contentspec S? '>'
+Elementdecl. Elementdecl ::= LELEMENTDECL XMLNAME [Contentspec] RTAG ;
+
+-- [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children
+XmlnameContentspec. Contentspec ::= XMLNAME ;
+LparenContentspec. Contentspec ::= LPAREN ;
+RparenContentspec. Contentspec ::= RPAREN ;
+BarContentspec. Contentspec ::= BAR ;
+QuestionContentspec. Contentspec ::= QUESTION ;
+StarContentspec. Contentspec ::= STAR ;
+PlusContentspec. Contentspec ::= PLUS ;
+CommaContentspec. Contentspec ::= COMMA ;
+separator Contentspec "" ;
 
 Chars. Chars ::= XMLCHARS ;
 separator nonempty Chars "" ;
