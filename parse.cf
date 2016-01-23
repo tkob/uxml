@@ -68,7 +68,7 @@ Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME LBRACKET [IntSubset] RBRACKET RTA
 -- TODO: EntityDecl. IntSubset ::= ...
 -- TODO: NotationDecl. IntSubset ::= ...
 ElementdeclIntSubset. IntSubset ::= Elementdecl ;
--- TODO: AttlistDecl. IntSubset ::= AttlistDecl ;
+AttlistDeclIntSubset. IntSubset ::= AttlistDecl ;
 separator IntSubset "" ;
 
 -- [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
@@ -117,6 +117,7 @@ EmptyElemTag. EmptyElemTag ::= LSTAG [Attribute] REMPTYTAG ;
 Elementdecl. Elementdecl ::= LELEMENTDECL XMLNAME [Contentspec] RTAG ;
 
 -- [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children
+-- Don't parse internal structure of elementdecl
 XmlnameContentspec. Contentspec ::= XMLNAME ;
 LparenContentspec. Contentspec ::= LPAREN ;
 RparenContentspec. Contentspec ::= RPAREN ;
@@ -126,6 +127,24 @@ StarContentspec. Contentspec ::= STAR ;
 PlusContentspec. Contentspec ::= PLUS ;
 CommaContentspec. Contentspec ::= COMMA ;
 separator Contentspec "" ;
+
+-- [52] AttlistDecl ::= '<!ATTLIST' S Name AttDef* S? '>'
+-- [53] AttDef ::= S Name S AttType S DefaultDecl
+-- [54] AttType ::= StringType | TokenizedType | EnumeratedType
+-- [55] StringType ::= 'CDATA'
+-- [56] TokenizedType ::= 'ID' | 'IDREF' | 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
+-- [57] EnumeratedType ::= NotationType | Enumeration
+-- [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')'
+-- [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
+-- [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
+AttlistDecl. AttlistDecl ::= LATTLISTDECL XMLNAME [AttDef] RTAG ;
+-- Don't parse internal structure of AttlistDecl
+XmlnameAttDef. AttDef ::= XMLNAME ;
+LparenAttDef. AttDef ::= LPAREN ;
+RparenAttDef. AttDef ::= RPAREN ;
+BarAttDef. AttDef ::= BAR ;
+XmlcharsAttDef. AttDef ::= XMLCHARS ;
+separator AttDef "" ;
 
 Chars. Chars ::= XMLCHARS ;
 separator nonempty Chars "" ;
