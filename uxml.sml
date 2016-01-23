@@ -21,6 +21,8 @@ structure UXML = struct
 
   type document = { prolog : prolog, root : element, misc : misc list }
 
+  fun derefCharData cs : string = raise Fail "derefCharData: unimplemented"
+
   fun showDocument {prolog, root, misc} =
         "{prolog = " ^ showProlog prolog ^
         ", root = " ^ showElement root ^
@@ -143,7 +145,7 @@ structure UXML = struct
   and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
         case splitName name of
              NONE => raise Fail "invalid QName"
-           | SOME (prefix, name) => (prefix, name, attvalue)
+           | SOME (prefix, name) => (prefix, name, derefCharData attvalue)
   and fromAttribute' elementPrefix bindings xs =
         let
           val triples = map fromAttribute xs
@@ -164,7 +166,7 @@ structure UXML = struct
                 in
                   { ns = if ns = "" then elementNs else ns,
                     name = name,
-                    attvalue = value }
+                    attvalue = derefCharData value }
                 end
           val attributes = map resolveNs (List.filter (negate isNsdecl) triples)
         in

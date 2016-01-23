@@ -135,13 +135,13 @@ DOCTYPE_COMMENT
 <STAG>[\"] => (YYBEGIN ATT_QUOT; continue());
 
 (* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
-<ATT_QUOT>[^<&"]+ => (append (stringBuffer, yytext); continue ()) ;
-<ATT_QUOT>{xmlReference} => (append (stringBuffer, xmlDeref yytext); continue ()) ;
-<ATT_QUOT>[\"] => (YYBEGIN STAG; XMLATTVALUE (toString stringBuffer)) ;
+<ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
+<ATT_QUOT>{xmlReference} => (if isEntityRef yytext then XMLENTITYREF yytext else XMLCHARS(xmlDeref yytext));
+<ATT_QUOT>[\"] => (YYBEGIN STAG; continue());
 (*                 | "'" ([^<&'] | Reference)* "'" *)
-<ATT_APOS>[^<&']+ => (append (stringBuffer, yytext); continue ()) ;
-<ATT_APOS>{xmlReference} => (append (stringBuffer, xmlDeref yytext); continue ()) ;
-<ATT_APOS>[\'] => (YYBEGIN STAG; XMLATTVALUE (toString stringBuffer)) ;
+<ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
+<ATT_APOS>{xmlReference} => (if isEntityRef yytext then XMLENTITYREF yytext else XMLCHARS(xmlDeref yytext));
+<ATT_APOS>[\'] => (YYBEGIN STAG; continue());
 
 <XML>{xmlCharData}  => (XMLCHARS(yytext));
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));

@@ -4,7 +4,6 @@ token RXMLDECL ;
 token LDOCTYPE ;
 token XMLAPOS ;
 token XMLQUOT ;
-token XMLATTVALUE of string ;
 token XMLCHARS of string ;
 token XMLCDSECT of string ;
 token XMLNAME of string ;
@@ -35,6 +34,12 @@ token PERCENT ;
 
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
+
+-- [10] AttValue ::= '"' ([^<&"] | Reference)* '"'
+--                |  "'" ([^<&'] | Reference)* "'"
+CharDataAttValue.  AttValue ::= XMLCHARS ;
+ReferenceAttValue. AttValue ::= XMLENTITYREF ;
+separator AttValue "" ;
 
 -- [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
 EmptyComment. Comment ::= LXMLCOMMENT RXMLCOMMENT ;
@@ -96,7 +101,7 @@ Element.      Element ::= Stag [Content] ETag ;
 Stag. Stag ::= LSTAG [Attribute] RTAG ;
 
 -- [41] Attribute ::= Name Eq AttValue
-Attribute. Attribute ::= XMLNAME EQUAL XMLATTVALUE ;
+Attribute. Attribute ::= XMLNAME EQUAL [AttValue] ;
 separator Attribute "" ;
 
 -- [42] ETag ::= '</' Name S? '>'
