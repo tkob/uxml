@@ -71,10 +71,10 @@ Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME LBRACKET [IntSubset] RBRACKET RTA
 -- TODO: DeclSep. IntSubset ::= ...
 -- TODO: PI. IntSubset ::= ...
 -- TODO: Comment. IntSubset ::= ...
--- TODO: NotationDecl. IntSubset ::= ...
 ElementdeclIntSubset. IntSubset ::= Elementdecl ;
 AttlistDeclIntSubset. IntSubset ::= AttlistDecl ;
 EntityDeclIntSubset.  IntSubset ::= EntityDecl ;
+NotationDeclIntSubset.IntSubset ::= NotationDecl ;
 separator IntSubset "" ;
 
 -- [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
@@ -160,6 +160,13 @@ separator AttDef "" ;
 GEDecl. EntityDecl ::= LENTITYDECL XMLNAME XMLCHARS RTAG ;
 PEDecl. EntityDecl ::= LENTITYDECL PERCENT XMLNAME XMLCHARS RTAG ;
 -- TODO: ExternalID and NDataDecl
+
+-- [82] NotationDecl ::= '<!NOTATION' S Name S (ExternalID | PublicID) S? '>'
+PublicIDNotationDecl.   NotationDecl ::= LNOTATIONDECL XMLNAME PublicID RTAG ;
+-- TODO: ExternalID
+
+-- [83] PublicID ::= 'PUBLIC' S PubidLiteral
+PublicID. PublicID ::= XMLNAME XMLCHARS ;
 
 Chars. Chars ::= XMLCHARS ;
 separator nonempty Chars "" ;

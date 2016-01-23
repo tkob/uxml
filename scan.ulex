@@ -217,5 +217,11 @@ DOCTYPE_COMMENT
 <ENTITY_DECL>"\"" ([^%&"] | {xmlPEReference} | {xmlReference})* "\"" => (XMLCHARS(yytext));
 <ENTITY_DECL>"'" ([^%&'] | {xmlPEReference} | {xmlReference})* "'" => (XMLCHARS(yytext));
 
+<NOTATION_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
+<NOTATION_DECL>{xmlS} => (continue());
+<NOTATION_DECL>{xmlName} => (XMLNAME(yytext));
+<NOTATION_DECL>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
+<NOTATION_DECL>"'"  ([^'])* "'"  => (XMLCHARS(yytext));
+
 <DOCTYPE_COMMENT>"-->" => (YYBEGIN DOCTYPE; continue());
 <DOCTYPE_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+ => (continue());
