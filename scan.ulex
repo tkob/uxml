@@ -176,10 +176,10 @@ DOCTYPE_COMMENT
 
 <DOCTYPE>">" => (YYBEGIN XML; RTAG);
 <DOCTYPE>{xmlS} => (continue());
-<DOCTYPE>{xmlName} => (XMLNAME(yytext));
 <DOCTYPE>{xmlPEReference} => (XMLPEREF(yytext));
 <DOCTYPE>"PUBLIC" => (PUBLIC);
 <DOCTYPE>"SYSTEM" => (SYSTEM);
+<DOCTYPE>{xmlName} => (XMLNAME(yytext));
 <DOCTYPE>[\[] => (LBRACKET);
 <DOCTYPE>[\]] => (RBRACKET);
 <DOCTYPE>"<!ELEMENT"  =>(YYBEGIN ELEMENT_DECL; LELEMENTDECL );
@@ -215,19 +215,19 @@ DOCTYPE_COMMENT
 
 <ENTITY_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <ENTITY_DECL>{xmlS} => (continue());
-<ENTITY_DECL>{xmlName} => (XMLNAME(yytext));
 <ENTITY_DECL>"PUBLIC" => (PUBLIC);
 <ENTITY_DECL>"SYSTEM" => (SYSTEM);
 <ENTITY_DECL>"NDATA" => (NDATA);
+<ENTITY_DECL>{xmlName} => (XMLNAME(yytext));
 <ENTITY_DECL>"%" => (PERCENT);
 <ENTITY_DECL>"\"" ([^%&"] | {xmlPEReference} | {xmlReference})* "\"" => (XMLCHARS(yytext));
 <ENTITY_DECL>"'" ([^%&'] | {xmlPEReference} | {xmlReference})* "'" => (XMLCHARS(yytext));
 
 <NOTATION_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <NOTATION_DECL>{xmlS} => (continue());
-<NOTATION_DECL>{xmlName} => (XMLNAME(yytext));
 <NOTATION_DECL>"PUBLIC" => (PUBLIC);
 <NOTATION_DECL>"SYSTEM" => (SYSTEM);
+<NOTATION_DECL>{xmlName} => (XMLNAME(yytext));
 <NOTATION_DECL>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
 <NOTATION_DECL>"'"  ([^'])* "'"  => (XMLCHARS(yytext));
 
