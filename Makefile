@@ -1,6 +1,6 @@
 MLULEX = ml-ulex
 
-check: parse.sml scan.ulex.sml uxml.sml xml-test-suite t/xmltest-valid-sa.t
+check: parse.sml scan.ulex.sml uxml.sml xml-test-suite t/xmltest-valid-sa.t t/ibm-valid.t
 	prove --exec ./t/do-test
 
 xml-test-suite: xmlts20020606.tar
@@ -12,6 +12,9 @@ xmlts20020606.tar:
 
 t/xmltest-valid-sa.t: t/xmltest-valid-sa.t.in
 	autom4te -l m4sugar -o t/xmltest-valid-sa.t t/xmltest-valid-sa.t.in
+
+t/ibm-valid.t: t/ibm-valid.t.in
+	autom4te -l m4sugar -o t/ibm-valid.t t/ibm-valid.t.in
 
 main: parse.sml scan.ulex.sml uxml.sml main.sml main.mlb
 	mlton main.mlb
