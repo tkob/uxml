@@ -1,6 +1,6 @@
 MLULEX = ml-ulex
 
-check: parse.sml scan.ulex.sml uxml.sml xml-test-suite t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t
+check: parse.sml scan.ulex.sml uxml.sml xml-test-suite t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
 	prove --exec ./t/do-test
 
 xml-test-suite: xmlts20020606.tar
@@ -22,6 +22,9 @@ t/sun-valid.t: t/sun-valid.t.in
 t/oasis-pass.t: t/oasis-pass.t.in
 	autom4te -l m4sugar -o t/oasis-pass.t t/oasis-pass.t.in
 
+t/japanese.t: t/japanese.t.in
+	autom4te -l m4sugar -o t/japanese.t t/japanese.t.in
+
 main: parse.sml scan.ulex.sml uxml.sml main.sml main.mlb
 	mlton main.mlb
 
@@ -32,6 +35,6 @@ scan.ulex.sml: scan.ulex
 	$(MLULEX) --strict-sml scan.ulex
 
 clean:
-	rm -f main parse.sml scan.ulex.sml t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t
+	rm -f main parse.sml scan.ulex.sml t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
 
 .PHONY: check clean
