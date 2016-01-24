@@ -1,0 +1,16 @@
+m4_divert(0)dnl
+# Setup
+
+    - CM.make "test.cm";
+    ...
+    val it = true : bool
+    - fun parse fileName = UXML.parse TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName);
+    ...
+    val parse = fn : string -> ?.Parse.Ast.document list
+
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xml-test-suite/xmlconf/sun/valid/*.xml))), [
+[#] file
+
+    - length (parse "file");
+    val it = 1 : int
+])
