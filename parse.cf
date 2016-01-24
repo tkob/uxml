@@ -74,13 +74,13 @@ Doctypedecl4. Doctypedecl ::= LDOCTYPE XMLNAME ExternalID LBRACKET [IntSubset] R
 -- [28a] DeclSep ::= PEReference | S
 -- [28b] intSubset ::= (markupdecl | DeclSep)*
 -- [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment
--- TODO: PI. IntSubset ::= ...
 -- TODO: Comment. IntSubset ::= ...
 PEReferenceIntSubset. IntSubset ::= XMLPEREF ;
 ElementdeclIntSubset. IntSubset ::= Elementdecl ;
 AttlistDeclIntSubset. IntSubset ::= AttlistDecl ;
 EntityDeclIntSubset.  IntSubset ::= EntityDecl ;
 NotationDeclIntSubset.IntSubset ::= NotationDecl ;
+PIIntSubset.          IntSubset ::= PI ;
 separator IntSubset "" ;
 
 -- [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))

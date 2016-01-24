@@ -50,7 +50,7 @@
 %name UXMLLexer;
 %states DECL DOCTYPE XML STAG ETAG ATT_APOS ATT_QUOT CDATA PI PI_CONTENT
 XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
-DOCTYPE_COMMENT
+DOCTYPE_COMMENT DOCTYPE_PI DOCTYPE_PI_CONTENT
 ;
 
 (* [2] Char ::=
@@ -186,6 +186,7 @@ DOCTYPE_COMMENT
 <DOCTYPE>"<!ATTLIST"  =>(YYBEGIN ATTLIST_DECL; LATTLISTDECL );
 <DOCTYPE>"<!ENTITY"   =>(YYBEGIN ENTITY_DECL;  LENTITYDECL  );
 <DOCTYPE>"<!NOTATION" =>(YYBEGIN NOTATION_DECL;LNOTATIONDECL);
+<DOCTYPE>"<?" {piTarget} => (YYBEGIN DOCTYPE_PI; LPI(drop 2 yytext));
 <DOCTYPE>"<!--"       =>(YYBEGIN DOCTYPE_COMMENT; continue());
 <DOCTYPE>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
 <DOCTYPE>"'" ([^'])* "'" => (XMLCHARS(yytext));
@@ -235,3 +236,11 @@ DOCTYPE_COMMENT
 
 <DOCTYPE_COMMENT>"-->" => (YYBEGIN DOCTYPE; continue());
 <DOCTYPE_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+ => (continue());
+
+<DOCTYPE_PI>{xmlS}
+   (* White space immediately following the target name of a PI. *)
+   => (YYBEGIN DOCTYPE_PI_CONTENT; continue());
+<DOCTYPE_PI>"?>" => (YYBEGIN DOCTYPE; RPI);
+<DOCTYPE_PI_CONTENT>"?>" => (YYBEGIN DOCTYPE; RPI);
+<DOCTYPE_PI_CONTENT>({xmlChar} & ~"?")+ => (XMLCHARS(yytext));
+<DOCTYPE_PI_CONTENT>"?" => (XMLCHARS(yytext));
