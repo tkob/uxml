@@ -29,6 +29,6 @@ scan.ulex.sml: scan.ulex
 	$(MLULEX) --strict-sml scan.ulex
 
 clean:
-	rm -f main parse.sml scan.ulex.sml t/xmltest-valid-sa.t
+	rm -f main parse.sml scan.ulex.sml t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t
 
 .PHONY: check clean
