@@ -54,7 +54,7 @@ EmptyPI. PI ::= LPI RPI ;
 PI.      PI ::= LPI [Chars] RPI ;
 
 -- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
--- Note: ALthough this rule allows at most one occurence of doctypedecl,
+-- Note: Although this rule allows at most one occurence of doctypedecl,
 --       we regard doctypedecl as a Misc to simplify syntax.
 Prolog1. Prolog ::= [Misc] ;
 Prolog2. Prolog ::= XMLDecl [Misc] ;
