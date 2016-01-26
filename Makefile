@@ -1,7 +1,7 @@
 MLULEX = ml-ulex
 
 check: parse.sml scan.ulex.sml uxml.sml xml-test-suite t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
-	prove --exec ./t/do-test
+	prove -f --exec ./t/do-test
 
 xml-test-suite: xmlts20020606.tar
 	tar xf xmlts20020606.tar
