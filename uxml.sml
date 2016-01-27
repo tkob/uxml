@@ -5,14 +5,16 @@ structure UXML = struct
   type uri = string
 
   type pi = { target : string, content : string }
-  type attribute = { ns : name option, name : string, attvalue : string }
-  type nsdecl = { nsattname : name, nsattvalue : uri }
+  datatype attribute = Attr of { ns       : name option,
+                                 name     : name,
+                                 attvalue : string }
+                     | NSDecl of { nsattname  : name,
+                                   nsattvalue : uri }
   datatype misc = Comment of string | PI of pi
 
   datatype element = Element of { ns         : name option,
                                   name       : name,
                                   attributes : attribute list,
-                                  nsdecls    : nsdecl list,
                                   contents   : content list }
        and content = CharData of string
                    | ElementContent of element
@@ -36,14 +38,13 @@ structure UXML = struct
         "{target = " ^ target ^
         ", content = \"" ^ String.toString content ^
         "\"}"
-  and showElement (Element {ns, name, attributes, nsdecls, contents}) =
+  and showElement (Element {ns, name, attributes, contents}) =
         "(Element {ns = " ^ Option.getOpt (ns, "NONE") ^
         ", name = " ^ name ^
         ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
-        "], nsdecls = [" ^ String.concatWith ", " (map showNsdecl nsdecls) ^
         "], contents = [" ^ String.concatWith "," (map showContent contents) ^
         "]})"
-  and showAttribute {ns, name, attvalue} =
+  and showAttribute (Attr {ns, name, attvalue}) =
         "{ns = " ^ Option.getOpt (ns, "NONE") ^
         ", name = " ^ name ^
         ", attvalue = \"" ^ String.toString attvalue ^
@@ -115,7 +116,7 @@ structure UXML = struct
         fromEmptyElemTag bindings emptyElemTag
     | fromElement bindings (Parse.Ast.Element (span, sTag, contents, eTag)) =
         let
-          val (sTagName, bindings', attributes, nsdecls) = fromSTag bindings sTag
+          val (sTagName, bindings', attributes) = fromSTag bindings sTag
           val contents = fromContent' bindings' contents
           val eTagName = fromETag bindings' eTag
           (* TODO: WFC: Element Type Match *)
@@ -123,7 +124,6 @@ structure UXML = struct
           Element { ns = NONE, (* TODO *)
                     name = sTagName,
                     attributes = attributes,
-                    nsdecls = [], (* TODO *)
                     contents = contents }
         end
   and fromSTag bindings (Parse.Ast.Stag (span, name, attributes)) =
@@ -132,9 +132,9 @@ structure UXML = struct
             case splitName name of
                  SOME x => x
                | NONE => raise Fail "invalid QName"
-          val (bindings', attributes, nsdecls) = fromAttribute' prefix bindings attributes
+          val (bindings', attributes) = fromAttribute' prefix bindings attributes
         in
-          (name, bindings', attributes, nsdecls)
+          (name, bindings', attributes)
         end
   and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
         case splitName name of
@@ -156,13 +156,13 @@ structure UXML = struct
                 let
                   val ns = lookupNs (prefix, bindings')
                 in
-                  { ns = if ns = NONE then elementNs else ns,
-                    name = name,
-                    attvalue = derefCharData value }
+                  Attr { ns = if ns = NONE then elementNs else ns,
+                         name = name,
+                         attvalue = derefCharData value }
                 end
           val attributes = map resolveNs (List.filter (negate isNsdecl) triples)
         in
-          (bindings', attributes, nsdecls)
+          (bindings', attributes)
         end
   and fromETag bindings (Parse.Ast.ETag (span, name)) = name
   and fromContent bindings (Parse.Ast.CharDataContent (span, chars)) =
@@ -181,12 +181,11 @@ structure UXML = struct
             case splitName name of
                  SOME x => x
                | NONE => raise Fail "invalid QName"
-          val (bindings', attributes, nsdecls) = fromAttribute' prefix bindings attributes
+          val (bindings', attributes) = fromAttribute' prefix bindings attributes
         in
           Element { ns = NONE, (* TODO *)
                     name = name,
                     attributes = attributes,
-                    nsdecls = nsdecls,
                     contents = [] }
         end
   and fromChars (Parse.Ast.Chars (span, chars)) = chars
