@@ -4,26 +4,25 @@ structure UXML = struct
   type name = string
   type uri = string
 
-  datatype attribute = Attr of { ns       : name option,
-                                 name     : name,
-                                 attvalue : string }
-                     | NSDecl of { nsattname  : name,
-                                   nsattvalue : uri }
-  datatype misc = Comment of string
-                | PI of { target  : string,
-                          content : string }
-
-  datatype element = Element of { ns         : name option,
+  datatype document = Document of { prolog : misc list,
+                                    root   : element,
+                                    epilog : misc list }
+       and element = Element of { ns         : name option,
                                   name       : name,
                                   attributes : attribute list,
                                   contents   : content list }
        and content = CharData of string
                    | ElementContent of element
                    | MiscContent of misc
+       and attribute = Attr of { ns       : name option,
+                                 name     : name,
+                                 attvalue : string }
+                     | NSDecl of { nsattname  : name,
+                                   nsattvalue : uri }
+       and misc = Comment of string
+                | PI of { target  : string,
+                          content : string }
 
-  datatype document = Document of { prolog : misc list,
-                                    root   : element,
-                                    epilog : misc list }
 
   fun derefCharData cs : string = raise Fail "derefCharData: unimplemented"
 
