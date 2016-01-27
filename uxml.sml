@@ -19,18 +19,16 @@ structure UXML = struct
                    | PIContent of pi
                    | CommentContent of string
 
-  type document = { prolog : prolog, root : element, misc : misc list }
+  datatype document = Document of { prolog : misc list,
+                                    root   : element,
+                                    epilog : misc list }
 
   fun derefCharData cs : string = raise Fail "derefCharData: unimplemented"
 
-  fun showDocument {prolog, root, misc} =
-        "{prolog = " ^ showProlog prolog ^
-        ", root = " ^ showElement root ^
-        ", misc = [" ^ String.concatWith "," (map showMisc misc) ^
-        "]}"
-  and showProlog {xmldecl, misc} =
-        "{xmldecl = [" ^ String.concatWith ", " (map showAttribute xmldecl) ^
-        "], misc = [" ^ String.concatWith "," (map showMisc misc) ^
+  fun showDocument (Document {prolog, root, epilog}) =
+        "{prolog = [" ^ String.concatWith "," (map showMisc prolog) ^
+        "], root = " ^ showElement root ^
+        ", misc = [" ^ String.concatWith "," (map showMisc epilog) ^
         "]}"
   and showMisc (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
     | showMisc (PI pi) = "(PI " ^ showPi pi ^ ")"
@@ -91,19 +89,17 @@ structure UXML = struct
         end
 
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
-        { prolog = fromProlog prolog,
-          root = fromElement [{nsattname = "", nsattvalue = ""}] root,
-          misc = fromMisc' misc }
+        Document { prolog = fromProlog prolog,
+                   root = fromElement [{nsattname = "", nsattvalue = ""}] root,
+                   epilog = fromMisc' misc }
   and fromComment (Parse.Ast.EmptyComment (span)) = ""
     | fromComment (Parse.Ast.Comment (span, comment)) = comment
   and fromPI (Parse.Ast.EmptyPI (span, target)) =
         { target = target, content = "" }
     | fromPI (Parse.Ast.PI (span, target, content)) =
         { target = target, content = fromChars' content }
-  and fromProlog (Parse.Ast.Prolog1 (span, misc)) =
-        { xmldecl = [], misc = fromMisc' misc }
-    | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) =
-        { xmldecl = fromXMLDecl xmldecl, misc = fromMisc' misc }
+  and fromProlog (Parse.Ast.Prolog1 (span, misc)) = fromMisc' misc
+    | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = fromMisc' misc
   and fromXMLDecl (Parse.Ast.XMLDecl (span, attributes)) = fromPseudoAttr' attributes
   and fromPseudoAttr (Parse.Ast.PseudoAttr1 (span, name, attvalue)) =
         { ns = "", name = name, attvalue = attvalue }
