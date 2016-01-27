@@ -1,18 +1,20 @@
 structure Parse = ParseFun(UXMLLexer)
 
 structure UXML = struct
+  type name = string
+  type uri = string
+
   type pi = { target : string, content : string }
-  type attribute = { ns : string, name : string, attvalue : string }
-  type nsdecl = { nsattname : string, nsattvalue : string }
+  type attribute = { ns : name option, name : string, attvalue : string }
+  type nsdecl = { nsattname : name, nsattvalue : uri }
   datatype misc = Comment of string | PI of pi
   type prolog = { xmldecl : attribute list, misc : misc list }
 
-  datatype element = Element of {
-                       ns : string,
-                       name : string,
-                       attributes : attribute list,
-                       nsdecls : nsdecl list,
-                       contents : content list }
+  datatype element = Element of { ns         : name option,
+                                  name       : name,
+                                  attributes : attribute list,
+                                  nsdecls    : nsdecl list,
+                                  contents   : content list }
        and content = CharData of string
                    | ElementContent of element
                    | CDSect of string
@@ -37,14 +39,14 @@ structure UXML = struct
         ", content = \"" ^ String.toString content ^
         "\"}"
   and showElement (Element {ns, name, attributes, nsdecls, contents}) =
-        "(Element {ns = " ^ ns ^
+        "(Element {ns = " ^ Option.getOpt (ns, "NONE") ^
         ", name = " ^ name ^
         ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
         "], nsdecls = [" ^ String.concatWith ", " (map showNsdecl nsdecls) ^
         "], contents = [" ^ String.concatWith "," (map showContent contents) ^
         "]})"
   and showAttribute {ns, name, attvalue} =
-        "{ns = " ^ ns ^
+        "{ns = " ^ Option.getOpt (ns, "NONE") ^
         ", name = " ^ name ^
         ", attvalue = \"" ^ String.toString attvalue ^
         "\"}"
@@ -122,7 +124,7 @@ structure UXML = struct
           val eTagName = fromETag bindings' eTag
           (* TODO: WFC: Element Type Match *)
         in
-          Element { ns = "", (* TODO *)
+          Element { ns = NONE, (* TODO *)
                     name = sTagName,
                     attributes = attributes,
                     nsdecls = [], (* TODO *)
@@ -153,14 +155,12 @@ structure UXML = struct
                 { nsattname = name, nsattvalue = value }
           val nsdecls = map tripleToNsdecl (List.filter isNsdecl triples)
           val bindings' = nsdecls @ bindings
-          (* TODO: error handling *)
-          val SOME elementNs = lookupNs (elementPrefix, bindings')
+          val elementNs = lookupNs (elementPrefix, bindings')
           fun resolveNs (prefix, name, value) =
                 let
-                  (* TODO: error handling *)
-                  val SOME ns = lookupNs (prefix, bindings')
+                  val ns = lookupNs (prefix, bindings')
                 in
-                  { ns = if ns = "" then elementNs else ns,
+                  { ns = if ns = NONE then elementNs else ns,
                     name = name,
                     attvalue = derefCharData value }
                 end
@@ -186,7 +186,7 @@ structure UXML = struct
                | NONE => raise Fail "invalid QName"
           val (bindings', attributes, nsdecls) = fromAttribute' prefix bindings attributes
         in
-          Element { ns = "", (* TODO *)
+          Element { ns = NONE, (* TODO *)
                     name = name,
                     attributes = attributes,
                     nsdecls = nsdecls,
