@@ -4,13 +4,14 @@ structure UXML = struct
   type name = string
   type uri = string
 
-  type pi = { target : string, content : string }
   datatype attribute = Attr of { ns       : name option,
                                  name     : name,
                                  attvalue : string }
                      | NSDecl of { nsattname  : name,
                                    nsattvalue : uri }
-  datatype misc = Comment of string | PI of pi
+  datatype misc = Comment of string
+                | PI of { target  : string,
+                          content : string }
 
   datatype element = Element of { ns         : name option,
                                   name       : name,
@@ -18,8 +19,7 @@ structure UXML = struct
                                   contents   : content list }
        and content = CharData of string
                    | ElementContent of element
-                   | PIContent of pi
-                   | CommentContent of string
+                   | MiscContent of misc
 
   datatype document = Document of { prolog : misc list,
                                     root   : element,
@@ -57,9 +57,7 @@ structure UXML = struct
         "(CharData \"" ^ String.toString charData ^ "\")"
     | showContent (ElementContent element) =
         "(ElementContent " ^ showElement element ^ ")"
-    | showContent (PIContent pi) = "(PIContent " ^ showPi pi ^ ")"
-    | showContent (CommentContent comment) =
-        "(CommentContent \"" ^ String.toString comment ^ "\")"
+    | showContent (MiscContent misc) = "(MiscContent " ^ showMisc misc ^ ")"
 
   fun negate pred = (fn x => not (pred x))
 
@@ -91,12 +89,12 @@ structure UXML = struct
         Document { prolog = fromProlog prolog,
                    root = fromElement [{nsattname = "", nsattvalue = ""}] root,
                    epilog = fromMisc' misc }
-  and fromComment (Parse.Ast.EmptyComment (span)) = ""
-    | fromComment (Parse.Ast.Comment (span, comment)) = comment
+  and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
+    | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
   and fromPI (Parse.Ast.EmptyPI (span, target)) =
-        { target = target, content = "" }
+        PI { target = target, content = "" }
     | fromPI (Parse.Ast.PI (span, target, content)) =
-        { target = target, content = fromChars' content }
+        PI { target = target, content = fromChars' content }
   and fromProlog (Parse.Ast.Prolog1 (span, misc)) = fromMisc' misc
     | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = fromMisc' misc
   and fromXMLDecl (Parse.Ast.XMLDecl (span, attributes)) = fromPseudoAttr' attributes
@@ -106,8 +104,8 @@ structure UXML = struct
         { ns = "", name = name, attvalue = attvalue }
   and fromPseudoAttr' xs = map fromPseudoAttr xs
   and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
-        SOME (Comment (fromComment comment))
-    | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (PI (fromPI pi))
+        SOME (fromComment comment)
+    | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
     | fromMisc (Parse.Ast.SMisc (span, s)) =
         if List.all Char.isSpace (explode s) then NONE
         else raise Fail "non-space char in misc"
@@ -171,9 +169,9 @@ structure UXML = struct
         ElementContent (fromElement bindings element)
     | fromContent bindings (Parse.Ast.CDSectContent (span, cdsect)) =
         CharData cdsect
-    | fromContent bindings (Parse.Ast.PIContent (span, pi)) = PIContent (fromPI pi)
+    | fromContent bindings (Parse.Ast.PIContent (span, pi)) = MiscContent (fromPI pi)
     | fromContent bindings (Parse.Ast.CommentContent (span, comment)) =
-        CommentContent (fromComment comment)
+        MiscContent (fromComment comment)
   and fromContent' bindings xs = map (fromContent bindings) xs
   and fromEmptyElemTag bindings (Parse.Ast.EmptyElemTag (span, name, attributes)) =
         let
