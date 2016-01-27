@@ -17,7 +17,6 @@ structure UXML = struct
                                   contents   : content list }
        and content = CharData of string
                    | ElementContent of element
-                   | CDSect of string
                    | PIContent of pi
                    | CommentContent of string
 
@@ -58,8 +57,6 @@ structure UXML = struct
         "(CharData \"" ^ String.toString charData ^ "\")"
     | showContent (ElementContent element) =
         "(ElementContent " ^ showElement element ^ ")"
-    | showContent (CDSect cdsect) =
-        "(CDSect \"" ^ String.toString cdsect ^ "\")"
     | showContent (PIContent pi) = "(PIContent " ^ showPi pi ^ ")"
     | showContent (CommentContent comment) =
         "(CommentContent \"" ^ String.toString comment ^ "\")"
@@ -173,7 +170,8 @@ structure UXML = struct
         CharData (fromChars chars)
     | fromContent bindings (Parse.Ast.ElementContent (span, element)) =
         ElementContent (fromElement bindings element)
-    | fromContent bindings (Parse.Ast.CDSectContent (span, cdsect)) = CDSect cdsect
+    | fromContent bindings (Parse.Ast.CDSectContent (span, cdsect)) =
+        CharData cdsect
     | fromContent bindings (Parse.Ast.PIContent (span, pi)) = PIContent (fromPI pi)
     | fromContent bindings (Parse.Ast.CommentContent (span, comment)) =
         CommentContent (fromComment comment)
