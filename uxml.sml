@@ -8,7 +8,6 @@ structure UXML = struct
   type attribute = { ns : name option, name : string, attvalue : string }
   type nsdecl = { nsattname : name, nsattvalue : uri }
   datatype misc = Comment of string | PI of pi
-  type prolog = { xmldecl : attribute list, misc : misc list }
 
   datatype element = Element of { ns         : name option,
                                   name       : name,
