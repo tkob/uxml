@@ -97,6 +97,7 @@ structure UXML = struct
     | fromMisc (Parse.Ast.SMisc (span, s)) =
         if List.all Char.isSpace (explode s) then NONE
         else raise Fail "non-space char in misc"
+    | fromMisc (Parse.Ast.DoctypeMisc (span, doctype)) = NONE
   and fromElement (Parse.Ast.EmptyElement (span, emptyElemTag)) =
         fromEmptyElemTag emptyElemTag
     | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
