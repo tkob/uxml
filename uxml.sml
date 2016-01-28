@@ -96,12 +96,6 @@ structure UXML = struct
         PI { target = target, content = fromChars' content }
   and fromProlog (Parse.Ast.Prolog1 (span, misc)) = fromMisc' misc
     | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = fromMisc' misc
-  and fromXMLDecl (Parse.Ast.XMLDecl (span, attributes)) = fromPseudoAttr' attributes
-  and fromPseudoAttr (Parse.Ast.PseudoAttr1 (span, name, attvalue)) =
-        { ns = "", name = name, attvalue = attvalue }
-    | fromPseudoAttr (Parse.Ast.PseudoAttr2 (span, name, attvalue)) =
-        { ns = "", name = name, attvalue = attvalue }
-  and fromPseudoAttr' xs = map fromPseudoAttr xs
   and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
         SOME (fromComment comment)
     | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
