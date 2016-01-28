@@ -9,14 +9,13 @@ structure Main = struct
                if Option.isSome fileName then TextIO.closeIn ins else ()
        in
          let
-           val strm = UXMLLexer.streamifyInstream ins
            val sourcemap = case fileName of
                                 NONE => AntlrStreamPos.mkSourcemap ()
                               | SOME n => AntlrStreamPos.mkSourcemap' n
-           val trees = Parse.parse sourcemap strm
-           val numParses = length trees
+           val uxmls =
+                 UXML.parse TextIO.StreamIO.input1 (TextIO.getInstream ins)
+           val numParses = length uxmls
            fun println s = print (s ^ "\n")
-           val uxmls = map UXML.fromDocument trees
          in
            print (Int.toString numParses ^ " parse(s)\n");
            List.app (println o UXML.showDocument) uxmls;

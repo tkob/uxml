@@ -4,7 +4,7 @@ m4_divert(0)dnl
     - CM.make "test.cm";
     ...
     val it = true : bool
-    - fun parse fileName = UXML.parse TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName);
+    - fun parse fileName = UXML.parseRaw TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName);
     ...
     val parse = fn : string -> ?.Parse.Ast.document list
 

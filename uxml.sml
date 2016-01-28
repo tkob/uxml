@@ -70,7 +70,7 @@ structure UXML = struct
              | _ => (NONE, name)
         end
 
-  fun parse input1 instream =
+  fun parseRaw input1 instream =
         let
           val strm = UXMLLexer.streamifyReader input1 instream
           val sourcemap = AntlrStreamPos.mkSourcemap ()
@@ -79,73 +79,78 @@ structure UXML = struct
           parses
         end
 
-  fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
-        Document { prolog = fromProlog prolog,
-                   root = fromElement root,
-                   epilog = List.mapPartial fromMisc misc }
-  and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
-    | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
-  and fromPI (Parse.Ast.EmptyPI (span, target)) =
-        PI { target = target, content = "" }
-    | fromPI (Parse.Ast.PI (span, target, content)) =
-        PI { target = target, content = concat (map fromChars content) }
-  and fromProlog (Parse.Ast.Prolog1 (span, misc)) = List.mapPartial fromMisc misc
-    | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = List.mapPartial fromMisc misc
-  and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
-        SOME (fromComment comment)
-    | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
-    | fromMisc (Parse.Ast.SMisc (span, s)) =
-        if List.all Char.isSpace (explode s) then NONE
-        else raise Fail "non-space char in misc"
-    | fromMisc (Parse.Ast.DoctypeMisc (span, doctype)) = NONE
-  and fromElement (Parse.Ast.EmptyElement (span, emptyElemTag)) =
-        fromEmptyElemTag emptyElemTag
-    | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
+  fun parse input1 instream =
         let
-          val (nsprefix, name, attributes) = fromSTag sTag
-          val contents = map fromContent contents
-          val (nsprefix', name') = fromETag eTag
-          (* TODO: WFC: Element Type Match *)
+          fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
+                Document { prolog = fromProlog prolog,
+                           root = fromElement root,
+                           epilog = List.mapPartial fromMisc misc }
+          and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
+            | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
+          and fromPI (Parse.Ast.EmptyPI (span, target)) =
+                PI { target = target, content = "" }
+            | fromPI (Parse.Ast.PI (span, target, content)) =
+                PI { target = target, content = concat (map fromChars content) }
+          and fromProlog (Parse.Ast.Prolog1 (span, misc)) = List.mapPartial fromMisc misc
+            | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = List.mapPartial fromMisc misc
+          and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
+                SOME (fromComment comment)
+            | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
+            | fromMisc (Parse.Ast.SMisc (span, s)) =
+                if List.all Char.isSpace (explode s) then NONE
+                else raise Fail "non-space char in misc"
+            | fromMisc (Parse.Ast.DoctypeMisc (span, doctype)) = NONE
+          and fromElement (Parse.Ast.EmptyElement (span, emptyElemTag)) =
+                fromEmptyElemTag emptyElemTag
+            | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
+                let
+                  val (nsprefix, name, attributes) = fromSTag sTag
+                  val contents = map fromContent contents
+                  val (nsprefix', name') = fromETag eTag
+                  (* TODO: WFC: Element Type Match *)
+                in
+                  Element { nsprefix = nsprefix,
+                            name = name,
+                            attributes = attributes,
+                            contents = contents }
+                end
+          and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
+                let
+                  val (nsprefix, name) = splitName name
+                  val attributes = map fromAttribute attributes
+                in
+                  Element { nsprefix = nsprefix,
+                            name = name,
+                            attributes = attributes,
+                            contents = [] }
+                end
+          and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
+                let
+                  val (nsprefix, name) = splitName name
+                  val attributes = map fromAttribute attributes
+                in
+                  (nsprefix, name, attributes)
+                end
+          and fromETag (Parse.Ast.ETag (span, name)) = splitName name
+          and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
+                case splitName name of
+                     (NONE, name) =>
+                       Attr {nsprefix = NONE, name = name, attvalue = derefCharData attvalue}
+                   | (SOME "xmlns", name) =>
+                       NSDecl {nsprefix = name, uri = derefCharData attvalue}
+                   | (SOME nsprefix, name) =>
+                       Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
+          and fromContent (Parse.Ast.CharDataContent (span, chars)) =
+                CharData (fromChars chars)
+            | fromContent (Parse.Ast.ElementContent (span, element)) =
+                ElementContent (fromElement element)
+            | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
+                CharData cdsect
+            | fromContent (Parse.Ast.PIContent (span, pi)) = MiscContent (fromPI pi)
+            | fromContent (Parse.Ast.CommentContent (span, comment)) =
+                MiscContent (fromComment comment)
+          and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
-          Element { nsprefix = nsprefix,
-                    name = name,
-                    attributes = attributes,
-                    contents = contents }
+          map fromDocument (parseRaw input1 instream)
         end
-  and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
-        let
-          val (nsprefix, name) = splitName name
-          val attributes = map fromAttribute attributes
-        in
-          Element { nsprefix = nsprefix,
-                    name = name,
-                    attributes = attributes,
-                    contents = [] }
-        end
-  and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
-        let
-          val (nsprefix, name) = splitName name
-          val attributes = map fromAttribute attributes
-        in
-          (nsprefix, name, attributes)
-        end
-  and fromETag (Parse.Ast.ETag (span, name)) = splitName name
-  and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
-        case splitName name of
-             (NONE, name) =>
-               Attr {nsprefix = NONE, name = name, attvalue = derefCharData attvalue}
-           | (SOME "xmlns", name) =>
-               NSDecl {nsprefix = name, uri = derefCharData attvalue}
-           | (SOME nsprefix, name) =>
-               Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
-  and fromContent (Parse.Ast.CharDataContent (span, chars)) =
-        CharData (fromChars chars)
-    | fromContent (Parse.Ast.ElementContent (span, element)) =
-        ElementContent (fromElement element)
-    | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
-        CharData cdsect
-    | fromContent (Parse.Ast.PIContent (span, pi)) = MiscContent (fromPI pi)
-    | fromContent (Parse.Ast.CommentContent (span, comment)) =
-        MiscContent (fromComment comment)
-  and fromChars (Parse.Ast.Chars (span, chars)) = chars
 end

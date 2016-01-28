@@ -4,7 +4,7 @@
 - CM.make "test.cm";
 ...
 val it = true : bool
-- fun numParses s = length (UXML.parse Substring.getc (Substring.full s));
+- fun numParses s = length (UXML.parseRaw Substring.getc (Substring.full s));
 ...
 val numParses = fn : string -> int
 ```
