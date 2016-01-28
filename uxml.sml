@@ -82,28 +82,27 @@ structure UXML = struct
   fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
         Document { prolog = fromProlog prolog,
                    root = fromElement root,
-                   epilog = fromMisc' misc }
+                   epilog = List.mapPartial fromMisc misc }
   and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
     | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
   and fromPI (Parse.Ast.EmptyPI (span, target)) =
         PI { target = target, content = "" }
     | fromPI (Parse.Ast.PI (span, target, content)) =
-        PI { target = target, content = fromChars' content }
-  and fromProlog (Parse.Ast.Prolog1 (span, misc)) = fromMisc' misc
-    | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = fromMisc' misc
+        PI { target = target, content = concat (map fromChars content) }
+  and fromProlog (Parse.Ast.Prolog1 (span, misc)) = List.mapPartial fromMisc misc
+    | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = List.mapPartial fromMisc misc
   and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
         SOME (fromComment comment)
     | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
     | fromMisc (Parse.Ast.SMisc (span, s)) =
         if List.all Char.isSpace (explode s) then NONE
         else raise Fail "non-space char in misc"
-  and fromMisc' xs = (List.mapPartial fromMisc xs)
   and fromElement (Parse.Ast.EmptyElement (span, emptyElemTag)) =
         fromEmptyElemTag emptyElemTag
     | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
         let
           val (nsprefix, name, attributes) = fromSTag sTag
-          val contents = fromContent' contents
+          val contents = map fromContent contents
           val (nsprefix', name') = fromETag eTag
           (* TODO: WFC: Element Type Match *)
         in
@@ -115,7 +114,7 @@ structure UXML = struct
   and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
         let
           val (nsprefix, name) = splitName name
-          val attributes = fromAttribute' attributes
+          val attributes = map fromAttribute attributes
         in
           Element { nsprefix = nsprefix,
                     name = name,
@@ -125,7 +124,7 @@ structure UXML = struct
   and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
         let
           val (nsprefix, name) = splitName name
-          val attributes = fromAttribute' attributes
+          val attributes = map fromAttribute attributes
         in
           (nsprefix, name, attributes)
         end
@@ -138,8 +137,6 @@ structure UXML = struct
                NSDecl {nsprefix = name, uri = derefCharData attvalue}
            | (SOME nsprefix, name) =>
                Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
-  and fromAttribute' xs =
-        map fromAttribute xs
   and fromContent (Parse.Ast.CharDataContent (span, chars)) =
         CharData (fromChars chars)
     | fromContent (Parse.Ast.ElementContent (span, element)) =
@@ -149,7 +146,5 @@ structure UXML = struct
     | fromContent (Parse.Ast.PIContent (span, pi)) = MiscContent (fromPI pi)
     | fromContent (Parse.Ast.CommentContent (span, comment)) =
         MiscContent (fromComment comment)
-  and fromContent' xs = map fromContent xs
   and fromChars (Parse.Ast.Chars (span, chars)) = chars
-  and fromChars' xs = concat (map fromChars xs)
 end
