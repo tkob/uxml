@@ -7,18 +7,18 @@ structure UXML = struct
   datatype document = Document of { prolog : misc list,
                                     root   : element,
                                     epilog : misc list }
-       and element = Element of { ns         : name option,
+       and element = Element of { nsprefix   : name option,
                                   name       : name,
                                   attributes : attribute list,
                                   contents   : content list }
        and content = CharData of string
                    | ElementContent of element
                    | MiscContent of misc
-       and attribute = Attr of { ns       : name option,
+       and attribute = Attr of { nsprefix : name option,
                                  name     : name,
                                  attvalue : string }
-                     | NSDecl of { nsattname  : name,
-                                   nsattvalue : uri }
+                     | NSDecl of { nsprefix : name,
+                                   uri      : uri }
        and misc = Comment of string
                 | PI of { target  : string,
                           content : string }
@@ -37,20 +37,20 @@ structure UXML = struct
         "{target = " ^ target ^
         ", content = \"" ^ String.toString content ^
         "\"}"
-  and showElement (Element {ns, name, attributes, contents}) =
-        "(Element {ns = " ^ Option.getOpt (ns, "NONE") ^
+  and showElement (Element {nsprefix, name, attributes, contents}) =
+        "(Element {nsprefix = " ^ Option.getOpt (nsprefix, "NONE") ^
         ", name = " ^ name ^
         ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
         "], contents = [" ^ String.concatWith "," (map showContent contents) ^
         "]})"
-  and showAttribute (Attr {ns, name, attvalue}) =
-        "{ns = " ^ Option.getOpt (ns, "NONE") ^
+  and showAttribute (Attr {nsprefix, name, attvalue}) =
+        "{nsprefix = " ^ Option.getOpt (nsprefix, "NONE") ^
         ", name = " ^ name ^
         ", attvalue = \"" ^ String.toString attvalue ^
         "\"}"
-  and showNsdecl {nsattname, nsattvalue} =
-        "{nsattname = " ^ nsattname ^
-        ", nsattvalue = \"" ^ String.toString nsattvalue ^
+  and showNsdecl {nsprefix, uri} =
+        "{nsprefix = " ^ nsprefix ^
+        ", uri = \"" ^ String.toString uri ^
         "\"}"
   and showContent (CharData charData) =
         "(CharData \"" ^ String.toString charData ^ "\")"
@@ -118,7 +118,7 @@ structure UXML = struct
           val eTagName = fromETag bindings' eTag
           (* TODO: WFC: Element Type Match *)
         in
-          Element { ns = NONE, (* TODO *)
+          Element { nsprefix = NONE, (* TODO *)
                     name = sTagName,
                     attributes = attributes,
                     contents = contents }
@@ -153,7 +153,7 @@ structure UXML = struct
                 let
                   val ns = lookupNs (prefix, bindings')
                 in
-                  Attr { ns = if ns = NONE then elementNs else ns,
+                  Attr { nsprefix = if ns = NONE then elementNs else ns,
                          name = name,
                          attvalue = derefCharData value }
                 end
@@ -180,7 +180,7 @@ structure UXML = struct
                | NONE => raise Fail "invalid QName"
           val (bindings', attributes) = fromAttribute' prefix bindings attributes
         in
-          Element { ns = NONE, (* TODO *)
+          Element { nsprefix = NONE, (* TODO *)
                     name = name,
                     attributes = attributes,
                     contents = [] }
