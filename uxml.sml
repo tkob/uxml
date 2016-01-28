@@ -112,6 +112,19 @@ structure UXML = struct
                     attributes = attributes,
                     contents = contents }
         end
+  and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
+        let
+          val (prefix, name) =
+            case splitName name of
+                 SOME x => x
+               | NONE => raise Fail "invalid QName"
+          val attributes = fromAttribute' attributes
+        in
+          Element { nsprefix = NONE, (* TODO *)
+                    name = name,
+                    attributes = attributes,
+                    contents = [] }
+        end
   and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
         let
           val (prefix, name) =
@@ -142,19 +155,6 @@ structure UXML = struct
     | fromContent (Parse.Ast.CommentContent (span, comment)) =
         MiscContent (fromComment comment)
   and fromContent' xs = map fromContent xs
-  and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
-        let
-          val (prefix, name) =
-            case splitName name of
-                 SOME x => x
-               | NONE => raise Fail "invalid QName"
-          val attributes = fromAttribute' attributes
-        in
-          Element { nsprefix = NONE, (* TODO *)
-                    name = name,
-                    attributes = attributes,
-                    contents = [] }
-        end
   and fromChars (Parse.Ast.Chars (span, chars)) = chars
   and fromChars' xs = concat (map fromChars xs)
 end
