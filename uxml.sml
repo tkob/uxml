@@ -133,6 +133,8 @@ structure UXML = struct
         case splitName name of
              (NONE, name) =>
                Attr {nsprefix = NONE, name = name, attvalue = derefCharData attvalue}
+           | (SOME "xmlns", name) =>
+               NSDecl {nsprefix = name, uri = derefCharData attvalue}
            | (SOME nsprefix, name) =>
                Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
   and fromAttribute' xs =
