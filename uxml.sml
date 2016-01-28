@@ -65,9 +65,9 @@ structure UXML = struct
           val fields = String.fields (fn c => c = #":") name
         in
           case fields of
-               [name] => SOME ("", name)
-             | [prefix, name] => SOME (prefix, name)
-             | _ => NONE
+               [_] => (NONE, name)
+             | [nsprefix, name] => (SOME nsprefix, name)
+             | _ => (NONE, name)
         end
 
   fun parse input1 instream =
@@ -102,46 +102,39 @@ structure UXML = struct
         fromEmptyElemTag emptyElemTag
     | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
         let
-          val (sTagName, attributes) = fromSTag sTag
+          val (nsprefix, name, attributes) = fromSTag sTag
           val contents = fromContent' contents
           val eTagName = fromETag eTag
           (* TODO: WFC: Element Type Match *)
         in
-          Element { nsprefix = NONE, (* TODO *)
-                    name = sTagName,
+          Element { nsprefix = nsprefix,
+                    name = name,
                     attributes = attributes,
                     contents = contents }
         end
   and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
         let
-          val (prefix, name) =
-            case splitName name of
-                 SOME x => x
-               | NONE => raise Fail "invalid QName"
+          val (nsprefix, name) = splitName name
           val attributes = fromAttribute' attributes
         in
-          Element { nsprefix = NONE, (* TODO *)
+          Element { nsprefix = nsprefix,
                     name = name,
                     attributes = attributes,
                     contents = [] }
         end
   and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
         let
-          val (prefix, name) =
-            case splitName name of
-                 SOME x => x
-               | NONE => raise Fail "invalid QName"
+          val (nsprefix, name) = splitName name
           val attributes = fromAttribute' attributes
         in
-          (name, attributes)
+          (nsprefix, name, attributes)
         end
   and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
         case splitName name of
-             NONE => raise Fail "invalid QName"
-           | SOME ("", name) =>
+             (NONE, name) =>
                Attr {nsprefix = NONE, name = name, attvalue = derefCharData attvalue}
-           | SOME (prefix, name) =>
-               Attr {nsprefix = SOME prefix, name = name, attvalue = derefCharData attvalue}
+           | (SOME nsprefix, name) =>
+               Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
   and fromAttribute' xs =
         map fromAttribute xs
   and fromETag (Parse.Ast.ETag (span, name)) = name
