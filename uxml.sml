@@ -81,6 +81,10 @@ structure UXML = struct
 
   fun parse input1 instream =
         let
+          val rawParse = case parseRaw input1 instream of
+                              [] => raise Fail "no parses"
+                            | [parse] => parse
+                            | _ => raise Fail "multiple parses"
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 Document { prolog = fromProlog prolog,
                            root = fromElement root,
@@ -151,6 +155,6 @@ structure UXML = struct
                 MiscContent (fromComment comment)
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
-          map fromDocument (parseRaw input1 instream)
+          fromDocument rawParse
         end
 end
