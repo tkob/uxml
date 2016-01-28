@@ -104,7 +104,7 @@ structure UXML = struct
         let
           val (nsprefix, name, attributes) = fromSTag sTag
           val contents = fromContent' contents
-          val eTagName = fromETag eTag
+          val (nsprefix', name') = fromETag eTag
           (* TODO: WFC: Element Type Match *)
         in
           Element { nsprefix = nsprefix,
@@ -129,6 +129,7 @@ structure UXML = struct
         in
           (nsprefix, name, attributes)
         end
+  and fromETag (Parse.Ast.ETag (span, name)) = splitName name
   and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
         case splitName name of
              (NONE, name) =>
@@ -139,7 +140,6 @@ structure UXML = struct
                Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
   and fromAttribute' xs =
         map fromAttribute xs
-  and fromETag (Parse.Ast.ETag (span, name)) = name
   and fromContent (Parse.Ast.CharDataContent (span, chars)) =
         CharData (fromChars chars)
     | fromContent (Parse.Ast.ElementContent (span, element)) =
