@@ -157,6 +157,8 @@ structure UXML = struct
                 CharData (fromChars chars)
             | fromContent (Parse.Ast.ElementContent (span, element)) =
                 ElementContent (fromElement element)
+            | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
+                raise Fail "ReferenceContent: unimplemented"
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
                 CharData cdsect
             | fromContent (Parse.Ast.PIContent (span, pi)) = MiscContent (fromPI pi)
