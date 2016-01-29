@@ -16,11 +16,11 @@
               w2c (Word.orb (0wx80, Word.andb (word, 0wx3f)))]
         end
 
-  fun xmlDeref "&amp;" = "&"
-    | xmlDeref "&lt;" = "<"
-    | xmlDeref "&gt;" = ">"
-    | xmlDeref "&apos;" = "'"
-    | xmlDeref "&quot;" = "\""
+  fun xmlDeref "&amp;"  = XMLCHARS "&"
+    | xmlDeref "&lt;"   = XMLCHARS "<"
+    | xmlDeref "&gt;"   = XMLCHARS ">"
+    | xmlDeref "&apos;" = XMLCHARS "'"
+    | xmlDeref "&quot;" = XMLCHARS "\""
     | xmlDeref r =
         let
           val (digitStart, radix) =
@@ -30,7 +30,7 @@
           val digits = String.extract (r, digitStart, NONE)
           val SOME word = StringCvt.scanString (Word.scan radix) digits
         in
-          encode word
+          XMLCHARS (encode word)
         end
   
   val stringBuffer : string list ref = ref []
@@ -129,19 +129,19 @@ DOCTYPE_COMMENT DOCTYPE_PI DOCTYPE_PI_CONTENT
 
 (* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
 <ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
-<ATT_QUOT>{xmlCharRef} => (XMLCHARS(xmlDeref yytext));
+<ATT_QUOT>{xmlCharRef} => (xmlDeref yytext);
 <ATT_QUOT>{xmlEntityRef} => (XMLENTITYREF yytext);
 <ATT_QUOT>[\"] => (YYBEGIN STAG; continue());
 (*                 | "'" ([^<&'] | Reference)* "'" *)
 <ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
-<ATT_APOS>{xmlCharRef} => (XMLCHARS(xmlDeref yytext));
+<ATT_APOS>{xmlCharRef} => (xmlDeref yytext);
 <ATT_APOS>{xmlEntityRef} => (XMLENTITYREF yytext);
 <ATT_APOS>[\'] => (YYBEGIN STAG; continue());
 
 <XML>{xmlCharData}  => (XMLCHARS(yytext));
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 <XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
-<XML>{xmlCharRef}   => (XMLCHARS(xmlDeref yytext));
+<XML>{xmlCharRef}   => (xmlDeref yytext);
 <XML>{xmlEntityRef} => (XMLENTITYREF yytext);
 <XML>"<![CDATA["    => (YYBEGIN CDATA; continue());
 <XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
