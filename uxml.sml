@@ -136,14 +136,23 @@ structure UXML = struct
                   (nsprefix, name, attributes)
                 end
           and fromETag (Parse.Ast.ETag (span, name)) = splitName name
-          and fromAttribute (Parse.Ast.Attribute (span, name, attvalue)) =
+          and fromAttribute (Parse.Ast.Attribute (span, name, attvalues)) =
                 case splitName name of
                      (NONE, name) =>
-                       Attr {nsprefix = NONE, name = name, attvalue = derefCharData attvalue}
+                       Attr { nsprefix = NONE,
+                              name = name,
+                              attvalue = concat (map fromAttValue attvalues) }
                    | (SOME "xmlns", name) =>
-                       NSDecl {nsprefix = name, uri = derefCharData attvalue}
+                       NSDecl { nsprefix = name,
+                                uri = concat (map fromAttValue attvalues) }
                    | (SOME nsprefix, name) =>
-                       Attr {nsprefix = SOME nsprefix, name = name, attvalue = derefCharData attvalue}
+                       Attr { nsprefix = SOME nsprefix,
+                              name = name,
+                              attvalue = concat (map fromAttValue attvalues) }
+          and fromAttValue (Parse.Ast.CharDataAttValue (span, charData)) =
+                charData
+            | fromAttValue (Parse.Ast.ReferenceAttValue (span, reference)) =
+                raise Fail "fromAttValue: unimplemented"
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
                 CharData (fromChars chars)
             | fromContent (Parse.Ast.ElementContent (span, element)) =
