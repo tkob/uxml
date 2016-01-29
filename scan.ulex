@@ -3,13 +3,6 @@
   type lex_result = Token.token
   val eof = fn () => EOF
   
-  fun isEntityRef "&amp;" = false
-    | isEntityRef "&lt;" = false
-    | isEntityRef "&gt;" = false
-    | isEntityRef "&apos;" = false
-    | isEntityRef "&quot;" = false
-    | isEntityRef r = not (String.isPrefix "&#" r)
-
   fun encode word =
         let
           val w2c = Char.chr o Word.toInt
@@ -136,17 +129,20 @@ DOCTYPE_COMMENT DOCTYPE_PI DOCTYPE_PI_CONTENT
 
 (* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
 <ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
-<ATT_QUOT>{xmlReference} => (if isEntityRef yytext then XMLENTITYREF yytext else XMLCHARS(xmlDeref yytext));
+<ATT_QUOT>{xmlCharRef} => (XMLCHARS(xmlDeref yytext));
+<ATT_QUOT>{xmlEntityRef} => (XMLENTITYREF yytext);
 <ATT_QUOT>[\"] => (YYBEGIN STAG; continue());
 (*                 | "'" ([^<&'] | Reference)* "'" *)
 <ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
-<ATT_APOS>{xmlReference} => (if isEntityRef yytext then XMLENTITYREF yytext else XMLCHARS(xmlDeref yytext));
+<ATT_APOS>{xmlCharRef} => (XMLCHARS(xmlDeref yytext));
+<ATT_APOS>{xmlEntityRef} => (XMLENTITYREF yytext);
 <ATT_APOS>[\'] => (YYBEGIN STAG; continue());
 
 <XML>{xmlCharData}  => (XMLCHARS(yytext));
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 <XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
-<XML>{xmlReference} => (if isEntityRef yytext then XMLENTITYREF yytext else XMLCHARS(xmlDeref yytext));
+<XML>{xmlCharRef}   => (XMLCHARS(xmlDeref yytext));
+<XML>{xmlEntityRef} => (XMLENTITYREF yytext);
 <XML>"<![CDATA["    => (YYBEGIN CDATA; continue());
 <XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
 <XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
