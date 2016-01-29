@@ -32,6 +32,9 @@
         in
           XMLCHARS (encode word)
         end
+
+  fun xmlEntityRef r =
+        XMLENTITYREF (String.extract (r, 1, SOME (String.size r - 2)))
   
   val stringBuffer : string list ref = ref []
   fun append (sb, s : string) = sb := s :: (!sb)
@@ -130,19 +133,19 @@ DOCTYPE_COMMENT DOCTYPE_PI DOCTYPE_PI_CONTENT
 (* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
 <ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
 <ATT_QUOT>{xmlCharRef} => (xmlDeref yytext);
-<ATT_QUOT>{xmlEntityRef} => (XMLENTITYREF yytext);
+<ATT_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_QUOT>[\"] => (YYBEGIN STAG; continue());
 (*                 | "'" ([^<&'] | Reference)* "'" *)
 <ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
 <ATT_APOS>{xmlCharRef} => (xmlDeref yytext);
-<ATT_APOS>{xmlEntityRef} => (XMLENTITYREF yytext);
+<ATT_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_APOS>[\'] => (YYBEGIN STAG; continue());
 
 <XML>{xmlCharData}  => (XMLCHARS(yytext));
 <XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 <XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
 <XML>{xmlCharRef}   => (xmlDeref yytext);
-<XML>{xmlEntityRef} => (XMLENTITYREF yytext);
+<XML>{xmlEntityRef} => (xmlEntityRef yytext);
 <XML>"<![CDATA["    => (YYBEGIN CDATA; continue());
 <XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
 <XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
