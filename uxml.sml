@@ -139,14 +139,10 @@ structure UXML = struct
           fun lookupAtttype (elemName, attName) =
                 let
                   fun unboxName (Parse.Ast.Name (_, name)) = name
-                  fun lookupAtt [] = CDATA
-                      (* 3.3.3 Attribute-Value Normalization
-                       * All attributes for which no declaration has been read
-                       * SHOULD be treated by a non-validating processor as if
-                       * declared CDATA *)
+                  fun lookupAtt [] = NONE
                     | lookupAtt (Parse.Ast.AttDef (_, attName', atttype, defaultdecl)::attdefs) =
                         if attName = attName' then
-                          case atttype of
+                          SOME (case atttype of
                                Parse.Ast.StringType _ => CDATA
                              | Parse.Ast.IdType _ => ID
                              | Parse.Ast.IdrefType _ => IDREF
@@ -158,15 +154,21 @@ structure UXML = struct
                              | Parse.Ast.NotationType (_, names) =>
                                  NOTATION (map unboxName names)
                              | Parse.Ast.Enumeration (_, nmtokens) =>
-                                 ENUMERATION (map unboxName nmtokens)
+                                 ENUMERATION (map unboxName nmtokens))
                         else
                           lookupAtt attdefs
                   fun lookupElem [] = CDATA
+                      (* 3.3.3 Attribute-Value Normalization
+                       * All attributes for which no declaration has been read
+                       * SHOULD be treated by a non-validating processor as if
+                       * declared CDATA *)
                     | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = lookupElem intsubsets
                     | lookupElem (Parse.Ast.ElementdeclIntSubset _::intsubsets) = lookupElem intsubsets
                     | lookupElem (Parse.Ast.AttlistDeclIntSubset (_, Parse.Ast.AttlistDecl (_, elemName', attdefs))::intsubsets) =
                         if elemName = elemName' then
-                          lookupAtt attdefs
+                          case lookupAtt attdefs of
+                               SOME t => t
+                             | NONE => lookupElem intsubsets
                         else
                           lookupElem intsubsets
                     | lookupElem (Parse.Ast.EntityDeclIntSubset _::intsubsets) = lookupElem intsubsets
