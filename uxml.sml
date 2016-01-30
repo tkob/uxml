@@ -33,8 +33,51 @@ structure UXML = struct
                 | PI of { target  : string,
                           content : string }
 
+  (* toCanon converts a document into James Clark's Canonical XML *)
+  local
+    fun escapeChar #"&" = "&amp;"
+      | escapeChar #"<" = "&lt;"
+      | escapeChar #">" = "&gt;"
+      | escapeChar #"\"" = "&quot;"
+      | escapeChar #"\009" = "&#9;"
+      | escapeChar #"\010" = "&#10;"
+      | escapeChar #"\013" = "&#13;"
+      | escapeChar c = String.str c
+    fun escape s = concat (map escapeChar (explode s))
 
-  fun derefCharData cs : string = raise Fail "derefCharData: unimplemented"
+    fun makeName (ns, name) =
+          case ns of
+               NONE => name
+             | SOME ns => ns ^ ":" ^ name
+
+    and fromAttribute (Attr {nsprefix, name, attvalue}) =
+          let
+            val name = makeName (nsprefix, name)
+          in
+            name ^ "=\"" ^ escape attvalue ^ "\""
+          end
+      | fromAttribute (NSDecl {nsprefix, uri}) =
+          "xmlns:" ^ nsprefix ^ "=\"" ^ escape uri ^ "\""
+    and fromContent (CharData charData) = escape charData
+      | fromContent (Element {nsprefix, name, attributes, contents}) =
+          let
+            val name = makeName (nsprefix, name)
+          in
+            "<" ^ name
+            ^ concat (map (fn x => " " ^ fromAttribute x) attributes)
+            ^ ">"
+            ^ concat (map fromContent contents)
+            ^ "</" ^ name ^ ">"
+          end
+      | fromContent (MiscContent misc) = fromMisc misc
+    and fromMisc (Comment comment) = ""
+      | fromMisc (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
+  in
+    fun toCanon (Document {prolog, root, epilog}) =
+          concat (map fromMisc prolog)
+          ^ fromContent root
+          ^ concat (map fromMisc epilog)
+  end
 
   fun showDocument (Document {prolog, root, epilog}) =
         "{prolog = [" ^ String.concatWith "," (map showMisc prolog) ^
