@@ -265,8 +265,11 @@ structure UXML = struct
                         normalize attvalues (encode (Word.fromInt charRef)::cs)
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
                         raise Fail "normalizeAttValue: unimplemented"
+                  val cdataNormalized = normalize attvalues []
                 in
-                  normalize attvalues []
+                  if atttype = CDATA then cdataNormalized
+                  else
+                    String.concatWith " " (String.tokens (fn c => c = #" ") cdataNormalized)
                 end
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
                 CharData (fromChars chars)
