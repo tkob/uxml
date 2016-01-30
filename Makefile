@@ -1,14 +1,14 @@
 MLULEX = ml-ulex
 
-check: parse.sml scan.ulex.sml uxml.sml xml-test-suite t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
+check: parse.sml scan.ulex.sml uxml.sml xmlconf t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
 	prove -f --exec ./t/do-test
 
-xml-test-suite: xmlts20020606.tar
-	tar xf xmlts20020606.tar
-	touch xml-test-suite
+xmlconf: xmlts20130923.tar.gz
+	tar xzf xmlts20130923.tar.gz
+	touch xmlconf
 
-xmlts20020606.tar:
-	wget http://www.w3.org/XML/Test/xmlts20020606.tar
+xmlts20130923.tar.gz:
+	wget http://www.w3.org/XML/Test/xmlts20130923.tar.gz
 
 t/xmltest-valid-sa.t: t/xmltest-valid-sa.t.in
 	autom4te -l m4sugar -o t/xmltest-valid-sa.t t/xmltest-valid-sa.t.in

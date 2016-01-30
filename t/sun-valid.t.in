@@ -8,7 +8,7 @@ m4_divert(0)dnl
     ...
     val parse = fn : string -> ?.Parse.Ast.document list
 
-m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xml-test-suite/xmlconf/sun/valid/*.xml))), [
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xmlconf/sun/valid/*.xml))), [
 [#] file
 
     - length (parse "file");

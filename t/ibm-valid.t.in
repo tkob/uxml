@@ -8,7 +8,7 @@ m4_divert(0)dnl
     ...
     val parse = fn : string -> ?.Parse.Ast.document list
 
-m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xml-test-suite/xmlconf/ibm/valid/P*/*.xml))), [
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xmlconf/ibm/valid/P*/*.xml))), [
 m4_bmatch(file, [P02/ibm02v01.xml], [# P02 is skipped
 ], [[#] file
 
