@@ -139,10 +139,14 @@ structure UXML = struct
           fun lookupAtttype (elemName, attName) =
                 let
                   fun unboxName (Parse.Ast.Name (_, name)) = name
-                  fun lookupAtt [] = NONE
+                  fun lookupAtt [] = CDATA
+                      (* 3.3.3 Attribute-Value Normalization
+                       * All attributes for which no declaration has been read
+                       * SHOULD be treated by a non-validating processor as if
+                       * declared CDATA *)
                     | lookupAtt (Parse.Ast.AttDef (_, attName', atttype, defaultdecl)::attdefs) =
                         if attName = attName' then
-                          SOME (case atttype of
+                          case atttype of
                                Parse.Ast.StringType _ => CDATA
                              | Parse.Ast.IdType _ => ID
                              | Parse.Ast.IdrefType _ => IDREF
@@ -154,10 +158,10 @@ structure UXML = struct
                              | Parse.Ast.NotationType (_, names) =>
                                  NOTATION (map unboxName names)
                              | Parse.Ast.Enumeration (_, nmtokens) =>
-                                 ENUMERATION (map unboxName nmtokens))
+                                 ENUMERATION (map unboxName nmtokens)
                         else
                           lookupAtt attdefs
-                  fun lookupElem [] = NONE
+                  fun lookupElem [] = CDATA
                     | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = lookupElem intsubsets
                     | lookupElem (Parse.Ast.ElementdeclIntSubset _::intsubsets) = lookupElem intsubsets
                     | lookupElem (Parse.Ast.AttlistDeclIntSubset (_, Parse.Ast.AttlistDecl (_, elemName', attdefs))::intsubsets) =
@@ -224,11 +228,8 @@ structure UXML = struct
           and fromETag (Parse.Ast.ETag (span, name)) = splitName name
           and fromAttribute elemName (Parse.Ast.Attribute (span, attName, attvalues)) =
                 let
-                  val attvalue = case lookupAtttype (elemName, attName) of
-                                      NONE =>
-                                        concat (map fromAttValue attvalues)
-                                    | SOME atttype =>
-                                        normalizeAttValue atttype attvalues
+                  val atttype= lookupAtttype (elemName, attName)
+                  val attvalue = normalizeAttValue atttype attvalues
                 in
                   case splitName attName of
                        (NONE, name) =>
@@ -243,12 +244,6 @@ structure UXML = struct
                                 name = name,
                                 attvalue = attvalue }
                 end
-          and fromAttValue (Parse.Ast.CharDataAttValue (span, charData)) =
-                charData
-            | fromAttValue (Parse.Ast.CharRefAttValue (span, charRef)) =
-                encode (Word.fromInt charRef)
-            | fromAttValue (Parse.Ast.ReferenceAttValue (span, reference)) =
-                raise Fail "fromAttValue: unimplemented"
           and normalizeAttValue atttype attvalues =
                 let
                   fun normalize [] cs = concat (rev cs)
