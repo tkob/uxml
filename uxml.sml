@@ -15,10 +15,7 @@ structure UXML = struct
                    | NOTATION of name list
                    | ENUMERATION of nmtoken list
 
-  datatype document = Document of { prolog : misc list,
-                                    root   : content,
-                                    epilog : misc list }
-       and content = CharData of string
+  datatype content = CharData of string
                    | Element of { nsprefix   : name option,
                                   name       : name,
                                   attributes : attribute list,
@@ -32,6 +29,7 @@ structure UXML = struct
        and misc = Comment of string
                 | PI of { target  : string,
                           content : string }
+  type document = content list
 
   (* toCanon converts a document into James Clark's Canonical XML *)
   local
@@ -73,17 +71,12 @@ structure UXML = struct
     and fromMisc (Comment comment) = ""
       | fromMisc (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
   in
-    fun toCanon (Document {prolog, root, epilog}) =
-          concat (map fromMisc prolog)
-          ^ fromContent root
-          ^ concat (map fromMisc epilog)
+    fun toCanon contents =
+          concat (map fromContent contents)
   end
 
-  fun showDocument (Document {prolog, root, epilog}) =
-        "{prolog = [" ^ String.concatWith "," (map showMisc prolog) ^
-        "], root = " ^ showContent root ^
-        ", misc = [" ^ String.concatWith "," (map showMisc epilog) ^
-        "]}"
+  fun showDocument contents =
+        "[" ^ String.concatWith "," (map showContent contents ) ^ "]"
   and showMisc (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
     | showMisc (PI pi) = "(PI " ^ showPi pi ^ ")"
   and showPi {target, content} =
@@ -258,15 +251,13 @@ structure UXML = struct
                   List.foldl merge attributes defaults
                 end
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
-                Document { prolog = fromProlog prolog,
-                           root = fromElement root,
-                           epilog = List.mapPartial fromMisc misc }
-          and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
-            | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
+                fromProlog prolog @ [fromElement root] @ List.mapPartial fromMisc misc
+          and fromComment (Parse.Ast.EmptyComment (span)) = MiscContent (Comment "")
+            | fromComment (Parse.Ast.Comment (span, comment)) = MiscContent (Comment comment)
           and fromPI (Parse.Ast.EmptyPI (span, target)) =
-                PI { target = target, content = "" }
+                MiscContent (PI { target = target, content = "" })
             | fromPI (Parse.Ast.PI (span, target, content)) =
-                PI { target = target, content = concat (map fromChars content) }
+                MiscContent (PI { target = target, content = concat (map fromChars content) })
           and fromProlog (Parse.Ast.Prolog1 (span, misc)) = List.mapPartial fromMisc misc
             | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = List.mapPartial fromMisc misc
           and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
@@ -367,9 +358,9 @@ structure UXML = struct
                 raise Fail "ReferenceContent: unimplemented"
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
                 CharData cdsect
-            | fromContent (Parse.Ast.PIContent (span, pi)) = MiscContent (fromPI pi)
+            | fromContent (Parse.Ast.PIContent (span, pi)) = fromPI pi
             | fromContent (Parse.Ast.CommentContent (span, comment)) =
-                MiscContent (fromComment comment)
+                fromComment comment
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
           fromDocument rawParse
