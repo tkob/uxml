@@ -7,6 +7,7 @@ token XMLQUOT ;
 token XMLCHARS of string ;
 token XMLCDSECT of string ;
 token XMLNAME of string ;
+token XMLCHARREF of int ;
 token XMLENTITYREF of string ;
 token XMLPEREF of string ;
 token LSTAG of string ;
@@ -54,6 +55,7 @@ Document. Document ::= Prolog Element [Misc] ;
 -- [10] AttValue ::= '"' ([^<&"] | Reference)* '"'
 --                |  "'" ([^<&'] | Reference)* "'"
 CharDataAttValue.  AttValue ::= XMLCHARS ;
+CharRefAttValue.   AttValue ::= XMLCHARREF ;
 ReferenceAttValue. AttValue ::= XMLENTITYREF ;
 separator AttValue "" ;
 
@@ -128,6 +130,7 @@ ETag. ETag ::= LETAG RTAG ;
 -- [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
 CharDataContent.  Content ::= Chars ;
 ElementContent.   Content ::= Element ;
+CharRefContent.   Content ::= XMLCHARREF ;
 ReferenceContent. Content ::= XMLENTITYREF ;
 CDSectContent.    Content ::= XMLCDSECT ;
 PIContent.        Content ::= PI ;

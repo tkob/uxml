@@ -3,19 +3,6 @@
   type lex_result = Token.token
   val eof = fn () => EOF
   
-  fun encode word =
-        let
-          val w2c = Char.chr o Word.toInt
-        in
-          if Word.< (word, 0wx10000) then UTF8.encode word
-          else
-            String.implode [
-              w2c (Word.orb (0wxf0, Word.>> (word, 0w18))),
-              w2c (Word.orb (0wx80, Word.andb (Word.>> (word, 0w12), 0wx3f))),
-              w2c (Word.orb (0wx80, Word.andb (Word.>> (word, 0w6), 0wx3f))),
-              w2c (Word.orb (0wx80, Word.andb (word, 0wx3f)))]
-        end
-
   fun xmlCharRef r =
         let
           val (digitStart, radix) =
@@ -23,9 +10,9 @@
             then (3, StringCvt.HEX)
             else (2, StringCvt.DEC)
           val digits = String.extract (r, digitStart, NONE)
-          val SOME word = StringCvt.scanString (Word.scan radix) digits
+          val SOME word = StringCvt.scanString (Int.scan radix) digits
         in
-          XMLCHARS (encode word)
+          XMLCHARREF word
         end
 
   fun xmlEntityRef "&amp;"  = XMLCHARS "&"

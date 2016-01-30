@@ -76,6 +76,19 @@ structure UXML = struct
              | _ => (NONE, name)
         end
 
+  fun encode word =
+        let
+          val w2c = Char.chr o Word.toInt
+        in
+          if Word.< (word, 0wx10000) then UTF8.encode word
+          else
+            String.implode [
+              w2c (Word.orb (0wxf0, Word.>> (word, 0w18))),
+              w2c (Word.orb (0wx80, Word.andb (Word.>> (word, 0w12), 0wx3f))),
+              w2c (Word.orb (0wx80, Word.andb (Word.>> (word, 0w6), 0wx3f))),
+              w2c (Word.orb (0wx80, Word.andb (word, 0wx3f)))]
+        end
+
   fun parseRaw input1 instream =
         let
           (* 2.11 End-of-Line Handling *)
@@ -104,7 +117,60 @@ structure UXML = struct
                               [] => raise Fail "no parses"
                             | [parse] => parse
                             | _ => raise Fail "multiple parses"
-          fun lookupAtttype name = NONE (* TODO *)
+          val intsubsets =
+                let
+                  val misc = case rawParse of
+                                  (Parse.Ast.Document (span, Parse.Ast.Prolog1 (_, misc), _, _)) => misc
+                                | (Parse.Ast.Document (span, Parse.Ast.Prolog2 (_, _, misc), _, _)) => misc
+                  fun getDoctypedecl [] = NONE
+                    | getDoctypedecl (Parse.Ast.DoctypeMisc (_, doctypedecl)::_) =
+                        SOME doctypedecl
+                    | getDoctypedecl (_::misc) = getDoctypedecl misc
+                in
+                  case getDoctypedecl misc of
+                       NONE => []
+                     | SOME (Parse.Ast.Doctypedecl1 (_, _)) => []
+                     | SOME (Parse.Ast.Doctypedecl2 (_, _, _)) => []
+                     | SOME (Parse.Ast.Doctypedecl3 (_, _, intsubsets)) =>
+                         intsubsets
+                     | SOME (Parse.Ast.Doctypedecl4 (_, _, _, intsubsets)) =>
+                         intsubsets
+                end
+          fun lookupAtttype (elemName, attName) =
+                let
+                  fun unboxName (Parse.Ast.Name (_, name)) = name
+                  fun lookupAtt [] = NONE
+                    | lookupAtt (Parse.Ast.AttDef (_, attName', atttype, defaultdecl)::attdefs) =
+                        if attName = attName' then
+                          SOME (case atttype of
+                               Parse.Ast.StringType _ => CDATA
+                             | Parse.Ast.IdType _ => ID
+                             | Parse.Ast.IdrefType _ => IDREF
+                             | Parse.Ast.IdrefsType _ => IDREFS
+                             | Parse.Ast.EntityType _ => ENTITY
+                             | Parse.Ast.EntitiesType _ => ENTITIES
+                             | Parse.Ast.NmtokenType _ => NMTOKEN
+                             | Parse.Ast.NmtokensType _ => NMTOKENS
+                             | Parse.Ast.NotationType (_, names) =>
+                                 NOTATION (map unboxName names)
+                             | Parse.Ast.Enumeration (_, nmtokens) =>
+                                 ENUMERATION (map unboxName nmtokens))
+                        else
+                          lookupAtt attdefs
+                  fun lookupElem [] = NONE
+                    | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.ElementdeclIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.AttlistDeclIntSubset (_, Parse.Ast.AttlistDecl (_, elemName', attdefs))::intsubsets) =
+                        if elemName = elemName' then
+                          lookupAtt attdefs
+                        else
+                          lookupElem intsubsets
+                    | lookupElem (Parse.Ast.EntityDeclIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.NotationDeclIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.PIIntSubset _::intsubsets) = lookupElem intsubsets
+                in
+                  lookupElem intsubsets
+                end
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 Document { prolog = fromProlog prolog,
                            root = fromElement root,
@@ -141,7 +207,7 @@ structure UXML = struct
           and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
                 let
                   val (nsprefix, name) = splitName name
-                  val attributes = map fromAttribute attributes
+                  val attributes = map (fromAttribute name) attributes
                 in
                   Element { nsprefix = nsprefix,
                             name = name,
@@ -151,20 +217,20 @@ structure UXML = struct
           and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
                 let
                   val (nsprefix, name) = splitName name
-                  val attributes = map fromAttribute attributes
+                  val attributes = map (fromAttribute name) attributes
                 in
                   (nsprefix, name, attributes)
                 end
           and fromETag (Parse.Ast.ETag (span, name)) = splitName name
-          and fromAttribute (Parse.Ast.Attribute (span, name, attvalues)) =
+          and fromAttribute elemName (Parse.Ast.Attribute (span, attName, attvalues)) =
                 let
-                  val attvalue = case lookupAtttype name of
+                  val attvalue = case lookupAtttype (elemName, attName) of
                                       NONE =>
                                         concat (map fromAttValue attvalues)
                                     | SOME atttype =>
                                         normalizeAttValue atttype attvalues
                 in
-                  case splitName name of
+                  case splitName attName of
                        (NONE, name) =>
                          Attr { nsprefix = NONE,
                                 name = name,
@@ -179,6 +245,8 @@ structure UXML = struct
                 end
           and fromAttValue (Parse.Ast.CharDataAttValue (span, charData)) =
                 charData
+            | fromAttValue (Parse.Ast.CharRefAttValue (span, charRef)) =
+                encode (Word.fromInt charRef)
             | fromAttValue (Parse.Ast.ReferenceAttValue (span, reference)) =
                 raise Fail "fromAttValue: unimplemented"
           and normalizeAttValue atttype attvalues =
@@ -198,6 +266,8 @@ structure UXML = struct
                         in
                           normalize attvalues (String.translate normalizeWhiteSpace charData::cs)
                         end
+                    | normalize (Parse.Ast.CharRefAttValue (_, charRef)::attvalues) cs =
+                        normalize attvalues (encode (Word.fromInt charRef)::cs)
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
                         raise Fail "normalizeAttValue: unimplemented"
                 in
@@ -207,6 +277,8 @@ structure UXML = struct
                 CharData (fromChars chars)
             | fromContent (Parse.Ast.ElementContent (span, element)) =
                 fromElement element
+            | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
+                CharData (encode (Word.fromInt charRef))
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
                 raise Fail "ReferenceContent: unimplemented"
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
