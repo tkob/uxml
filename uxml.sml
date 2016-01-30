@@ -20,15 +20,14 @@ structure UXML = struct
                                   name       : name,
                                   attributes : attribute list,
                                   contents   : content list }
-                   | MiscContent of misc
+                   | Comment of string
+                   | PI of { target  : string,
+                             content : string }
        and attribute = Attr of { nsprefix : name option,
                                  name     : name,
                                  attvalue : string }
                      | NSDecl of { nsprefix : name,
                                    uri      : uri }
-       and misc = Comment of string
-                | PI of { target  : string,
-                          content : string }
   type document = content list
 
   (* toCanon converts a document into James Clark's Canonical XML *)
@@ -67,9 +66,8 @@ structure UXML = struct
             ^ concat (map fromContent contents)
             ^ "</" ^ name ^ ">"
           end
-      | fromContent (MiscContent misc) = fromMisc misc
-    and fromMisc (Comment comment) = ""
-      | fromMisc (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
+      | fromContent (Comment comment) = ""
+      | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
   in
     fun toCanon contents =
           concat (map fromContent contents)
@@ -77,8 +75,6 @@ structure UXML = struct
 
   fun showDocument contents =
         "[" ^ String.concatWith "," (map showContent contents ) ^ "]"
-  and showMisc (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
-    | showMisc (PI pi) = "(PI " ^ showPi pi ^ ")"
   and showPi {target, content} =
         "{target = " ^ target ^
         ", content = \"" ^ String.toString content ^
@@ -100,7 +96,8 @@ structure UXML = struct
         ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
         "], contents = [" ^ String.concatWith "," (map showContent contents) ^
         "]})"
-    | showContent (MiscContent misc) = "(MiscContent " ^ showMisc misc ^ ")"
+    | showContent (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
+    | showContent (PI pi) = "(PI " ^ showPi pi ^ ")"
 
   fun splitName name =
         let
@@ -252,12 +249,12 @@ structure UXML = struct
                 end
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 fromProlog prolog @ [fromElement root] @ List.mapPartial fromMisc misc
-          and fromComment (Parse.Ast.EmptyComment (span)) = MiscContent (Comment "")
-            | fromComment (Parse.Ast.Comment (span, comment)) = MiscContent (Comment comment)
+          and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
+            | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
           and fromPI (Parse.Ast.EmptyPI (span, target)) =
-                MiscContent (PI { target = target, content = "" })
+                PI { target = target, content = "" }
             | fromPI (Parse.Ast.PI (span, target, content)) =
-                MiscContent (PI { target = target, content = concat (map fromChars content) })
+                PI { target = target, content = concat (map fromChars content) }
           and fromProlog (Parse.Ast.Prolog1 (span, misc)) = List.mapPartial fromMisc misc
             | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = List.mapPartial fromMisc misc
           and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
