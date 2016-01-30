@@ -2,7 +2,18 @@ structure Parse = ParseFun(UXMLLexer)
 
 structure UXML = struct
   type name = string
+  type nmtoken = string
   type uri = string
+  datatype atttype = CDATA
+                   | ID
+                   | IDREF
+                   | IDREFS
+                   | ENTITY
+                   | ENTITIES
+                   | NMTOKEN
+                   | NMTOKENS
+                   | NOTATION of name list
+                   | ENUMERATION of nmtoken list
 
   datatype document = Document of { prolog : misc list,
                                     root   : content,
