@@ -25,7 +25,7 @@ token LENTITYDECL ;
 token LNOTATIONDECL ;
 token LPAREN ;
 token RPAREN ;
-token BAR ;
+token BAR "|";
 token QUESTION ;
 token STAR ;
 token PLUS ;
@@ -35,6 +35,18 @@ token PERCENT ;
 token PUBLIC ;
 token SYSTEM ;
 token NDATA ;
+token CDATA_KW ;
+token ID ;
+token IDREF ;
+token IDREFS ;
+token ENTITY ;
+token ENTITIES ;
+token NMTOKEN ;
+token NMTOKENS ;
+token NOTATION ;
+token REQUIRED ;
+token IMPLIED ;
+token FIXED ;
 
 -- [1] document ::= prolog element Misc*
 Document. Document ::= Prolog Element [Misc] ;
@@ -141,22 +153,34 @@ CommaContentspec. Contentspec ::= COMMA ;
 separator Contentspec "" ;
 
 -- [52] AttlistDecl ::= '<!ATTLIST' S Name AttDef* S? '>'
+AttlistDecl. AttlistDecl ::= LATTLISTDECL XMLNAME [AttDef] RTAG ;
+
 -- [53] AttDef ::= S Name S AttType S DefaultDecl
+AttDef. AttDef ::= XMLNAME AttType DefaultDecl ;
+separator AttDef "" ;
+
 -- [54] AttType ::= StringType | TokenizedType | EnumeratedType
 -- [55] StringType ::= 'CDATA'
 -- [56] TokenizedType ::= 'ID' | 'IDREF' | 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
 -- [57] EnumeratedType ::= NotationType | Enumeration
 -- [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')'
 -- [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
+StringType.   AttType ::= CDATA_KW ;
+IdType.       AttType ::= ID ;
+IdrefType.    AttType ::= IDREF ;
+IdrefsType.   AttType ::= IDREFS ;
+EntityType.   AttType ::= ENTITY ;
+EntitiesType. AttType ::= ENTITIES ;
+NmtokenType.  AttType ::= NMTOKEN ;
+NmtokensType. AttType ::= NMTOKENS ;
+NotationType. AttType ::= NOTATION LPAREN [Name] RPAREN ;
+Enumeration.  AttType ::= LPAREN [Name] RPAREN;
+
 -- [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
-AttlistDecl. AttlistDecl ::= LATTLISTDECL XMLNAME [AttDef] RTAG ;
--- Don't parse internal structure of AttlistDecl
-XmlnameAttDef. AttDef ::= XMLNAME ;
-LparenAttDef. AttDef ::= LPAREN ;
-RparenAttDef. AttDef ::= RPAREN ;
-BarAttDef. AttDef ::= BAR ;
-XmlcharsAttDef. AttDef ::= XMLCHARS ;
-separator AttDef "" ;
+RequiredDefaultDecl. DefaultDecl ::= REQUIRED ;
+ImpliedDefaultDecl.  DefaultDecl ::= IMPLIED ;
+FixedDefaultDecl.    DefaultDecl ::= FIXED AttValue ;
+DefaultDecl.         DefaultDecl ::= AttValue ;
 
 -- [70] EntityDecl ::= GEDecl | PEDecl
 -- [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
@@ -190,3 +214,6 @@ PublicID. PublicID ::= PUBLIC XMLCHARS ;
 
 Chars. Chars ::= XMLCHARS ;
 separator nonempty Chars "" ;
+
+Name. Name ::= XMLNAME ;
+separator nonempty Name "|" ;
