@@ -104,6 +104,7 @@ structure UXML = struct
                               [] => raise Fail "no parses"
                             | [parse] => parse
                             | _ => raise Fail "multiple parses"
+          fun lookupAtttype name = NONE (* TODO *)
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 Document { prolog = fromProlog prolog,
                            root = fromElement root,
@@ -156,22 +157,52 @@ structure UXML = struct
                 end
           and fromETag (Parse.Ast.ETag (span, name)) = splitName name
           and fromAttribute (Parse.Ast.Attribute (span, name, attvalues)) =
-                case splitName name of
-                     (NONE, name) =>
-                       Attr { nsprefix = NONE,
-                              name = name,
-                              attvalue = concat (map fromAttValue attvalues) }
-                   | (SOME "xmlns", name) =>
-                       NSDecl { nsprefix = name,
-                                uri = concat (map fromAttValue attvalues) }
-                   | (SOME nsprefix, name) =>
-                       Attr { nsprefix = SOME nsprefix,
-                              name = name,
-                              attvalue = concat (map fromAttValue attvalues) }
+                let
+                  val attvalue = case lookupAtttype name of
+                                      NONE =>
+                                        concat (map fromAttValue attvalues)
+                                    | SOME atttype =>
+                                        normalizeAttValue atttype attvalues
+                in
+                  case splitName name of
+                       (NONE, name) =>
+                         Attr { nsprefix = NONE,
+                                name = name,
+                                attvalue = attvalue }
+                     | (SOME "xmlns", name) =>
+                         NSDecl { nsprefix = name,
+                                  uri = attvalue }
+                     | (SOME nsprefix, name) =>
+                         Attr { nsprefix = SOME nsprefix,
+                                name = name,
+                                attvalue = attvalue }
+                end
           and fromAttValue (Parse.Ast.CharDataAttValue (span, charData)) =
                 charData
             | fromAttValue (Parse.Ast.ReferenceAttValue (span, reference)) =
                 raise Fail "fromAttValue: unimplemented"
+          and normalizeAttValue atttype attvalues =
+                let
+                  fun normalize [] cs = concat (rev cs)
+                    | normalize (Parse.Ast.CharDataAttValue (_, charData)::attvalues) cs =
+                        (* For a white space character (#x20, #xD, #xA, #x9),
+                         * append a space character (#x20) to the normalized
+                         * value.
+                         * For another character, append the character to the
+                         * normalized value. *)
+                        let
+                          fun normalizeWhiteSpace #"\009" = " "
+                            | normalizeWhiteSpace #"\010" = " "
+                            | normalizeWhiteSpace #"\013" = " "
+                            | normalizeWhiteSpace c = String.str c
+                        in
+                          normalize attvalues (String.translate normalizeWhiteSpace charData::cs)
+                        end
+                    | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
+                        raise Fail "normalizeAttValue: unimplemented"
+                in
+                  normalize attvalues []
+                end
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
                 CharData (fromChars chars)
             | fromContent (Parse.Ast.ElementContent (span, element)) =
