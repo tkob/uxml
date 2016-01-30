@@ -5,14 +5,13 @@ structure UXML = struct
   type uri = string
 
   datatype document = Document of { prolog : misc list,
-                                    root   : element,
+                                    root   : content,
                                     epilog : misc list }
-       and element = Element of { nsprefix   : name option,
+       and content = CharData of string
+                   | Element of { nsprefix   : name option,
                                   name       : name,
                                   attributes : attribute list,
                                   contents   : content list }
-       and content = CharData of string
-                   | ElementContent of element
                    | MiscContent of misc
        and attribute = Attr of { nsprefix : name option,
                                  name     : name,
@@ -28,7 +27,7 @@ structure UXML = struct
 
   fun showDocument (Document {prolog, root, epilog}) =
         "{prolog = [" ^ String.concatWith "," (map showMisc prolog) ^
-        "], root = " ^ showElement root ^
+        "], root = " ^ showContent root ^
         ", misc = [" ^ String.concatWith "," (map showMisc epilog) ^
         "]}"
   and showMisc (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
@@ -37,12 +36,6 @@ structure UXML = struct
         "{target = " ^ target ^
         ", content = \"" ^ String.toString content ^
         "\"}"
-  and showElement (Element {nsprefix, name, attributes, contents}) =
-        "(Element {nsprefix = " ^ Option.getOpt (nsprefix, "NONE") ^
-        ", name = " ^ name ^
-        ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
-        "], contents = [" ^ String.concatWith "," (map showContent contents) ^
-        "]})"
   and showAttribute (Attr {nsprefix, name, attvalue}) =
         "{nsprefix = " ^ Option.getOpt (nsprefix, "NONE") ^
         ", name = " ^ name ^
@@ -54,8 +47,12 @@ structure UXML = struct
         "\"}"
   and showContent (CharData charData) =
         "(CharData \"" ^ String.toString charData ^ "\")"
-    | showContent (ElementContent element) =
-        "(ElementContent " ^ showElement element ^ ")"
+    | showContent (Element {nsprefix, name, attributes, contents}) =
+        "(Element {nsprefix = " ^ Option.getOpt (nsprefix, "NONE") ^
+        ", name = " ^ name ^
+        ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
+        "], contents = [" ^ String.concatWith "," (map showContent contents) ^
+        "]})"
     | showContent (MiscContent misc) = "(MiscContent " ^ showMisc misc ^ ")"
 
   fun negate pred = (fn x => not (pred x))
@@ -156,7 +153,7 @@ structure UXML = struct
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
                 CharData (fromChars chars)
             | fromContent (Parse.Ast.ElementContent (span, element)) =
-                ElementContent (fromElement element)
+                fromElement element
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
                 raise Fail "ReferenceContent: unimplemented"
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
