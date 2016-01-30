@@ -79,7 +79,6 @@ Prolog2. Prolog ::= XMLDecl [Misc] ;
 -- [26] VersionNum ::= '1.' [0-9]+
 
 -- [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
--- TODO: ExternalID
 Doctypedecl1. Doctypedecl ::= LDOCTYPE XMLNAME RTAG ;
 Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME ExternalID RTAG ;
 Doctypedecl3. Doctypedecl ::= LDOCTYPE XMLNAME LBRACKET [IntSubset] RBRACKET RTAG ;
@@ -88,7 +87,6 @@ Doctypedecl4. Doctypedecl ::= LDOCTYPE XMLNAME ExternalID LBRACKET [IntSubset] R
 -- [28a] DeclSep ::= PEReference | S
 -- [28b] intSubset ::= (markupdecl | DeclSep)*
 -- [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment
--- TODO: Comment. IntSubset ::= ...
 PEReferenceIntSubset. IntSubset ::= XMLPEREF ;
 ElementdeclIntSubset. IntSubset ::= Elementdecl ;
 AttlistDeclIntSubset. IntSubset ::= AttlistDecl ;
@@ -106,7 +104,6 @@ PseudoAttr2. PseudoAttr ::= XMLNAME EQUAL XMLQUOT XMLCHARS XMLQUOT ;
 separator PseudoAttr "" ;
 
 -- [27] Misc ::= Comment | PI | S
--- TODO
 CommetnMisc. Misc ::= Comment ;
 PIMisc.      Misc ::= PI ;
 SMisc.       Misc ::= XMLCHARS ;
