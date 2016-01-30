@@ -182,8 +182,8 @@ Enumeration.  AttType ::= LPAREN [Name] RPAREN;
 -- [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
 RequiredDefaultDecl. DefaultDecl ::= REQUIRED ;
 ImpliedDefaultDecl.  DefaultDecl ::= IMPLIED ;
-FixedDefaultDecl.    DefaultDecl ::= FIXED AttValue ;
-DefaultDecl.         DefaultDecl ::= AttValue ;
+FixedDefaultDecl.    DefaultDecl ::= FIXED [AttValue] ;
+DefaultDecl.         DefaultDecl ::= [AttValue] ;
 
 -- [70] EntityDecl ::= GEDecl | PEDecl
 -- [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'

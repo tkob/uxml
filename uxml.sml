@@ -175,6 +175,43 @@ structure UXML = struct
                 in
                   lookupElem intsubsets
                 end
+          fun defaultAttValues elemName =
+                let
+                  fun defaultAttValue (Parse.Ast.AttDef (_, attName, atttype, defaultdecl)) =
+                        case defaultdecl of
+                             Parse.Ast.RequiredDefaultDecl _ => NONE
+                           | Parse.Ast.ImpliedDefaultDecl _ => NONE
+                           | Parse.Ast.FixedDefaultDecl (span, attvalue) =>
+                               SOME (attName, attvalue)
+                           | Parse.Ast.DefaultDecl (span, attvalue) =>
+                               SOME (attName, attvalue)
+                  fun lookupElem [] = []
+                    | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.ElementdeclIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.AttlistDeclIntSubset (_, Parse.Ast.AttlistDecl (_, elemName', attdefs))::intsubsets) =
+                        if elemName = elemName' then
+                          (List.mapPartial defaultAttValue attdefs) @ (lookupElem intsubsets)
+                        else
+                          lookupElem intsubsets
+                    | lookupElem (Parse.Ast.EntityDeclIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.NotationDeclIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.PIIntSubset _::intsubsets) = lookupElem intsubsets
+                in
+                  lookupElem intsubsets
+                end
+          fun lookupAttribute attName [] = NONE
+            | lookupAttribute attName (Parse.Ast.Attribute (_, attName', attvalues)::attributes) =
+                if attName = attName' then SOME attvalues
+                else lookupAttribute attName attributes
+          fun mergeDefaultAttValues defaults attributes =
+                let
+                  fun merge ((name, attvalues), attributes) =
+                        case lookupAttribute name attributes of
+                             SOME _ => attributes
+                           | NONE => Parse.Ast.Attribute ((0, 0), name, attvalues)::attributes
+                in
+                  List.foldl merge attributes defaults
+                end
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 Document { prolog = fromProlog prolog,
                            root = fromElement root,
@@ -211,6 +248,8 @@ structure UXML = struct
           and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
                 let
                   val (nsprefix, name) = splitName name
+                  val defaults = defaultAttValues name
+                  val attributes = mergeDefaultAttValues defaults attributes
                   val attributes = map (fromAttribute name) attributes
                 in
                   Element { nsprefix = nsprefix,
@@ -221,6 +260,8 @@ structure UXML = struct
           and fromSTag (Parse.Ast.Stag (span, name, attributes)) =
                 let
                   val (nsprefix, name) = splitName name
+                  val defaults = defaultAttValues name
+                  val attributes = mergeDefaultAttValues defaults attributes
                   val attributes = map (fromAttribute name) attributes
                 in
                   (nsprefix, name, attributes)
