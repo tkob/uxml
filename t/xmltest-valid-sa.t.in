@@ -8,13 +8,13 @@ m4_divert(0)dnl
     ...
     val parse = fn : string -> ?.Parse.Ast.document list
 
-m4_for([num], [1], [48], [1], [[#] m4_format([%03d], num).xml
+m4_for([num], [1], [48], [1], [[#] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
 
     - length (parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml");
     val it = 1 : int
 
 ])
-m4_for([num], [53], [110], [1], [[#] m4_format([%03d], num).xml
+m4_for([num], [53], [110], [1], [[#] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
 
     - length (parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml");
     val it = 1 : int
