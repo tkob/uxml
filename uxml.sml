@@ -55,8 +55,6 @@ structure UXML = struct
         "]})"
     | showContent (MiscContent misc) = "(MiscContent " ^ showMisc misc ^ ")"
 
-  fun negate pred = (fn x => not (pred x))
-
   fun splitName name =
         let
           val fields = String.fields (fn c => c = #":") name
