@@ -165,4 +165,17 @@ structure UXML = struct
         in
           fromDocument rawParse
         end
+
+  fun parseFile fileName =
+        let
+         val ins = TextIO.openIn fileName
+        in
+          let
+            val sourcemap = AntlrStreamPos.mkSourcemap' fileName
+          in
+            parse TextIO.StreamIO.input1 (TextIO.getInstream ins)
+            before TextIO.closeIn ins
+          end
+          handle e => (TextIO.closeIn ins; raise e)
+        end
 end
