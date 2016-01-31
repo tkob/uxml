@@ -534,14 +534,16 @@ structure UXML = struct
                      NONE => name
                    | SOME ns => ns ^ ":" ^ name
 
-          and fromAttribute (Attr {nsprefix, name, attvalue}) =
-                let
-                  val name = makeName (nsprefix, name)
-                in
-                  name ^ "=\"" ^ escape attvalue ^ "\""
-                end
-            | fromAttribute (NSDecl {nsprefix, uri}) =
-                "xmlns:" ^ nsprefix ^ "=\"" ^ escape uri ^ "\""
+          fun makeAttrName (Attr {nsprefix = NONE, name, ...}) = name
+            | makeAttrName (Attr {nsprefix = SOME nsprefix, name, ...}) =
+                nsprefix ^ ":" ^ name
+            | makeAttrName (NSDecl {nsprefix, ...}) =
+                "xmlns:" ^ nsprefix
+
+          and fromAttribute (attr as Attr {nsprefix, name, attvalue}) =
+                makeAttrName attr ^ "=\"" ^ escape attvalue ^ "\""
+            | fromAttribute (nsdecl as NSDecl {nsprefix, uri}) =
+                makeAttrName nsdecl ^ "=\"" ^ escape uri ^ "\""
           and fromContent (CharData charData) = escape charData
             | fromContent (Element {nsprefix, name, attributes, contents}) =
                 let
