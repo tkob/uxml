@@ -438,7 +438,7 @@ structure UXML = struct
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
                         let
                           val entityValue = case lookupEntity reference of
-                                                 NONE => raise Fail (reference ^ " not found")
+                                                 NONE => "&" ^ reference ^ ";"
                                                | SOME value =>
                                                    normalizeWhiteSpace value
                         in
