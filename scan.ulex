@@ -92,29 +92,21 @@ ATTLIST_QUOT ATTLIST_APOS
 %let xmlPubidLiteral = "\"" {xmlPubidChar}* "\""
                 | "'" {xmlPubidCharExceptQuot} "'";
 
-<INITIAL>{xmlS}+ => (YYBEGIN XML; continue());
-<INITIAL>"<?xml" {xmlS} => (YYBEGIN DECL; LXMLDECL);
-<INITIAL>"<!DOCTYPE" => (YYBEGIN DOCTYPE; LDOCTYPE);
-<INITIAL>"<" {xmlName} => (YYBEGIN STAG; LSTAG(drop 1 yytext));
-<INITIAL>"<!--" => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
+<INITIAL>{xmlCharData}  => (XMLCHARS(yytext));
+<INITIAL>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
+<INITIAL>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
+<INITIAL>{xmlCharRef}   => (xmlCharRef yytext);
+<INITIAL>{xmlEntityRef} => (xmlEntityRef yytext);
+<INITIAL>"<![CDATA["    => (YYBEGIN CDATA; continue());
+<INITIAL>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
 <INITIAL>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
-
-<DECL>"?>" => (YYBEGIN XML; RXMLDECL);
-<DECL>{xmlS} => (continue());
-<DECL>"version" => (XMLNAME(yytext));
-<DECL>"=" => (EQUAL);
-<DECL>"'" => (XMLAPOS);
-<DECL>"\"" => (XMLQUOT);
-<DECL>"1." [0-9]+ => (XMLCHARS(yytext));
-<DECL>"encoding" => (XMLNAME(yytext));
-<DECL>"standalone" => (XMLNAME(yytext));
-<DECL>[A-Za-z] ([A-Za-z0-9\._] | "-")* =>  (XMLCHARS(yytext));
+<INITIAL>"<!DOCTYPE"    => (YYBEGIN DOCTYPE; LDOCTYPE);
 
 <STAG>{xmlS} => (continue());
 <STAG>{xmlName} => (XMLNAME(yytext));
 <STAG>"="  => (EQUAL);
-<STAG>">"  => (YYBEGIN XML; RTAG);
-<STAG>"/>" => (YYBEGIN XML; REMPTYTAG);
+<STAG>">"  => (YYBEGIN INITIAL; RTAG);
+<STAG>"/>" => (YYBEGIN INITIAL; REMPTYTAG);
 <STAG>[\'] => (YYBEGIN ATT_APOS; continue());
 <STAG>[\"] => (YYBEGIN ATT_QUOT; continue());
 
@@ -129,21 +121,11 @@ ATTLIST_QUOT ATTLIST_APOS
 <ATT_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_APOS>[\'] => (YYBEGIN STAG; continue());
 
-<XML>{xmlCharData}  => (XMLCHARS(yytext));
-<XML>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
-<XML>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
-<XML>{xmlCharRef}   => (xmlCharRef yytext);
-<XML>{xmlEntityRef} => (xmlEntityRef yytext);
-<XML>"<![CDATA["    => (YYBEGIN CDATA; continue());
-<XML>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
-<XML>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
-<XML>"<!DOCTYPE"    => (YYBEGIN DOCTYPE; LDOCTYPE);
-
 <ETAG>{xmlS} => (continue());
-<ETAG>">" => (YYBEGIN XML; RTAG);
+<ETAG>">" => (YYBEGIN INITIAL; RTAG);
 
 (* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' *)
-<XML_COMMENT>"-->" => (YYBEGIN XML; RXMLCOMMENT);
+<XML_COMMENT>"-->" => (YYBEGIN INITIAL; RXMLCOMMENT);
 <XML_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+
   => (XMLCHARS(yytext));
 
@@ -151,17 +133,17 @@ ATTLIST_QUOT ATTLIST_APOS
 <PI>{xmlS}
    (* White space immediately following the target name of a PI. *)
    => (YYBEGIN PI_CONTENT; continue());
-<PI>"?>" => (YYBEGIN XML; RPI);
-<PI_CONTENT>"?>" => (YYBEGIN XML; RPI);
+<PI>"?>" => (YYBEGIN INITIAL; RPI);
+<PI_CONTENT>"?>" => (YYBEGIN INITIAL; RPI);
 <PI_CONTENT>({xmlChar} & ~"?")+ => (XMLCHARS(yytext));
 <PI_CONTENT>"?" => (XMLCHARS(yytext));
 
 (* [20] CData ::= (Char* - (Char* ']]>' Char* )) *)
-<CDATA>"]]>" => (YYBEGIN XML; XMLCDSECT (toString stringBuffer));
+<CDATA>"]]>" => (YYBEGIN INITIAL; XMLCDSECT (toString stringBuffer));
 <CDATA>({xmlChar} & ~"]")+ => (append (stringBuffer, yytext); continue ());
 <CDATA>[\]]  => (append (stringBuffer, yytext); continue ());
 
-<DOCTYPE>">" => (YYBEGIN XML; RTAG);
+<DOCTYPE>">" => (YYBEGIN INITIAL; RTAG);
 <DOCTYPE>{xmlS} => (continue());
 <DOCTYPE>{xmlPEReference} => (XMLPEREF(yytext));
 <DOCTYPE>"PUBLIC" => (PUBLIC);

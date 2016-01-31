@@ -262,8 +262,7 @@ structure UXML = struct
           val intsubsets =
                 let
                   val misc = case rawParse of
-                                  (Parse.Ast.Document (span, Parse.Ast.Prolog1 (_, misc), _, _)) => misc
-                                | (Parse.Ast.Document (span, Parse.Ast.Prolog2 (_, _, misc), _, _)) => misc
+                                  (Parse.Ast.Document (span, Parse.Ast.Prolog (_, misc), _, _)) => misc
                   fun getDoctypedecl [] = NONE
                     | getDoctypedecl (Parse.Ast.DoctypeMisc (_, doctypedecl)::_) =
                         SOME doctypedecl
@@ -364,8 +363,7 @@ structure UXML = struct
                 PI { target = target, content = "" }
             | fromPI (Parse.Ast.PI (span, target, content)) =
                 PI { target = target, content = concat (map fromChars content) }
-          and fromProlog (Parse.Ast.Prolog1 (span, misc)) = List.mapPartial fromMisc misc
-            | fromProlog (Parse.Ast.Prolog2 (span, xmldecl, misc)) = List.mapPartial fromMisc misc
+          and fromProlog (Parse.Ast.Prolog (span, misc)) = List.mapPartial fromMisc misc
           and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
                 SOME (fromComment comment)
             | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
