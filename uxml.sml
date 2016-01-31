@@ -20,6 +20,7 @@ structure UXML = struct
                                   name       : name,
                                   attributes : attribute list,
                                   contents   : content list }
+                   | Reference of string
                    | Comment of string
                    | PI of { target  : string,
                              content : string }
@@ -66,6 +67,7 @@ structure UXML = struct
             ^ concat (map fromContent contents)
             ^ "</" ^ name ^ ">"
           end
+      | fromContent (Reference reference) = "&" ^ reference ^ ";" (* TODO *)
       | fromContent (Comment comment) = ""
       | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
   in
@@ -480,9 +482,7 @@ structure UXML = struct
             | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
                 [CharData (encode (Word.fromInt charRef))]
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
-                (case lookupEntity reference of
-                     NONE => raise Fail (reference ^ " not found")
-                   | SOME value => [CharData value])
+                [Reference reference]
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
                 [CharData cdsect]
             | fromContent (Parse.Ast.PIContent (span, pi)) = [fromPI pi]
