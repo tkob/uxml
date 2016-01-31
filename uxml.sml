@@ -321,6 +321,59 @@ structure UXML = struct
                 if name = name' then SOME value
                 else lookup intsubsets name
             | lookup (_::intsubsets) name = lookup intsubsets name
+          fun lookupEntity "amp"  = SOME "&"
+            | lookupEntity "lt"   = SOME "<"
+            | lookupEntity "gt"   = SOME ">"
+            | lookupEntity "apos" = SOME "'"
+            | lookupEntity "quot" = SOME "\""
+            | lookupEntity name =
+                Option.map deref (lookup intsubsets name)
+          and deref s =
+                let
+                  fun take f xs =
+                        let
+                          fun take' [] acc = (rev acc, [])
+                            | take' (x::xs) acc =
+                                if (f x) then take' xs (x::acc)
+                                else (rev acc, x::xs)
+                        in
+                          take' xs []
+                        end
+                  fun deref' [] acc = concat (rev acc)
+                    | deref' (#"&":: #"#":: #"x"::cs) acc =
+                        let
+                          val (digits, cs') = take Char.isHexDigit cs
+                          val #";" = hd cs'
+                          val SOME word =
+                            StringCvt.scanString
+                            (Word.scan StringCvt.HEX)
+                            (implode digits)
+                        in
+                          deref' (tl cs') (encode word::acc)
+                        end
+                    | deref' (#"&":: #"#"::cs) acc =
+                        let
+                          val (digits, cs') = take Char.isDigit cs
+                          val #";" = hd cs'
+                          val SOME word =
+                            StringCvt.scanString
+                            (Word.scan StringCvt.DEC)
+                            (implode digits)
+                        in
+                          deref' (tl cs') (encode word::acc)
+                        end
+                    | deref' (#"&"::cs) acc =
+                        let
+                          val (name, cs') = take Char.isAlpha cs
+                          val #";" = hd cs'
+                          val SOME name = lookupEntity (implode name)
+                        in
+                          deref' (tl cs') (name::acc)
+                        end
+                    | deref' (c::cs) acc = deref' cs (String.str c::acc)
+                in
+                  deref' (explode s) []
+                end
           fun fromDocument (Parse.Ast.Document (span, contents)) =
                 map fromContent contents
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
@@ -390,74 +443,26 @@ structure UXML = struct
                     * value.
                     * For another character, append the character to the
                     * normalized value. *)
-                  fun normalizeWhiteSpace' "\009" = " "
-                    | normalizeWhiteSpace' "\010" = " "
-                    | normalizeWhiteSpace' "\013" = " "
-                    | normalizeWhiteSpace' s = s
-                  fun normalizeWhiteSpace c = normalizeWhiteSpace' (String.str c)
+                  fun normalizeWhiteSpace s =
+                        let
+                          fun normalizeWhiteSpace' #"\009" = " "
+                            | normalizeWhiteSpace' #"\010" = " "
+                            | normalizeWhiteSpace' #"\013" = " "
+                            | normalizeWhiteSpace' c = String.str c
+                        in
+                          String.translate normalizeWhiteSpace' s
+                        end
                   fun normalize [] cs = concat (rev cs)
                     | normalize (Parse.Ast.CharDataAttValue (_, charData)::attvalues) cs =
-                        normalize attvalues (String.translate normalizeWhiteSpace charData::cs)
+                        normalize attvalues (normalizeWhiteSpace charData::cs)
                     | normalize (Parse.Ast.CharRefAttValue (_, charRef)::attvalues) cs =
                         normalize attvalues (encode (Word.fromInt charRef)::cs)
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
                         let
-                          fun lookupEntity "amp"  = SOME "&"
-                            | lookupEntity "lt"   = SOME "<"
-                            | lookupEntity "gt"   = SOME ">"
-                            | lookupEntity "apos" = SOME "'"
-                            | lookupEntity "quot" = SOME "\""
-                            | lookupEntity name =
-                                Option.map deref (lookup intsubsets name)
-                          and deref s =
-                                let
-                                  fun take f xs =
-                                        let
-                                          fun take' [] acc = (rev acc, [])
-                                            | take' (x::xs) acc =
-                                                if (f x) then take' xs (x::acc)
-                                                else (rev acc, x::xs)
-                                        in
-                                          take' xs []
-                                        end
-                                  fun deref' [] acc = concat (rev acc)
-                                    | deref' (#"&":: #"#":: #"x"::cs) acc =
-                                        let
-                                          val (digits, cs') = take Char.isHexDigit cs
-                                          val #";" = hd cs'
-                                          val SOME word =
-                                            StringCvt.scanString
-                                            (Word.scan StringCvt.HEX)
-                                            (implode digits)
-                                        in
-                                          deref' (tl cs') (normalizeWhiteSpace' (encode word)::acc)
-                                        end
-                                    | deref' (#"&":: #"#"::cs) acc =
-                                        let
-                                          val (digits, cs') = take Char.isDigit cs
-                                          val #";" = hd cs'
-                                          val SOME word =
-                                            StringCvt.scanString
-                                            (Word.scan StringCvt.DEC)
-                                            (implode digits)
-                                        in
-                                          deref' (tl cs') (normalizeWhiteSpace' (encode word)::acc)
-                                        end
-                                    | deref' (#"&"::cs) acc =
-                                        let
-                                          val (name, cs') = take Char.isAlpha cs
-                                          val #";" = hd cs'
-                                          val SOME name = lookupEntity (implode name)
-                                        in
-                                          deref' (tl cs') (name::acc)
-                                        end
-                                    | deref' (c::cs) acc = deref' cs (normalizeWhiteSpace c::acc)
-                                in
-                                  deref' (explode s) []
-                                end
                           val entityValue = case lookupEntity reference of
                                                  NONE => raise Fail (reference ^ " not found")
-                                               | SOME value => value
+                                               | SOME value =>
+                                                   normalizeWhiteSpace value
                         in
                           normalize attvalues (entityValue::cs)
                         end
@@ -493,7 +498,7 @@ structure UXML = struct
             | fromContent (Parse.Ast.DoctypeContent (_, _)) = CharData ""
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
-          (lookup intsubsets, fromDocument rawParse)
+          (lookupEntity, fromDocument rawParse)
         end
 
   fun parseDocument input1 instream =
