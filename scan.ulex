@@ -28,6 +28,7 @@
   fun toString sb = concat (rev (!sb)) before sb := []
 
   fun drop n s = String.extract(s, n, NONE)
+  fun trimQuot s = String.extract (s, 1, SOME (size s - 2))
 );
 
 %name UXMLLexer;
@@ -157,8 +158,8 @@ ATTLIST_QUOT ATTLIST_APOS
 <DOCTYPE>"<!NOTATION" =>(YYBEGIN NOTATION_DECL;LNOTATIONDECL);
 <DOCTYPE>"<?" {piTarget} => (YYBEGIN DOCTYPE_PI; LPI(drop 2 yytext));
 <DOCTYPE>"<!--"       =>(YYBEGIN DOCTYPE_COMMENT; continue());
-<DOCTYPE>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
-<DOCTYPE>"'" ([^'])* "'" => (XMLCHARS(yytext));
+<DOCTYPE>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
+<DOCTYPE>"'" ([^'])* "'" => (XMLCHARS(trimQuot yytext));
 
 <ELEMENT_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <ELEMENT_DECL>{xmlS} => (continue());
@@ -211,16 +212,16 @@ ATTLIST_QUOT ATTLIST_APOS
 <ENTITY_DECL>"NDATA" => (NDATA);
 <ENTITY_DECL>{xmlName} => (XMLNAME(yytext));
 <ENTITY_DECL>"%" => (PERCENT);
-<ENTITY_DECL>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
-<ENTITY_DECL>"'" ([^'])* "'" => (XMLCHARS(yytext));
+<ENTITY_DECL>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
+<ENTITY_DECL>"'" ([^'])* "'" => (XMLCHARS(trimQuot yytext));
 
 <NOTATION_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <NOTATION_DECL>{xmlS} => (continue());
 <NOTATION_DECL>"PUBLIC" => (PUBLIC);
 <NOTATION_DECL>"SYSTEM" => (SYSTEM);
 <NOTATION_DECL>{xmlName} => (XMLNAME(yytext));
-<NOTATION_DECL>"\"" ([^"])* "\"" => (XMLCHARS(yytext));
-<NOTATION_DECL>"'"  ([^'])* "'"  => (XMLCHARS(yytext));
+<NOTATION_DECL>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
+<NOTATION_DECL>"'"  ([^'])* "'"  => (XMLCHARS(trimQuot yytext));
 
 <DOCTYPE_COMMENT>"-->" => (YYBEGIN DOCTYPE; continue());
 <DOCTYPE_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+ => (continue());
