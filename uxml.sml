@@ -122,8 +122,117 @@ structure UXML = struct
               w2c (Word.orb (0wx80, Word.andb (word, 0wx3f)))]
         end
 
+  fun parseXMLDecl input1 ins =
+        let
+          exception XMLDecl
+          infix --
+          fun (ph1 -- ph2) ins =
+                let
+                  val (x, ins') = ph1 ins
+                  val (y, ins'') = ph2 ins'
+                in
+                  ((x, y), ins'')
+                end
+          infix ||
+          fun (ph1 || ph2) ins =
+                ph1 ins handle XMLDecl => ph2 ins
+          infix >>
+          fun (ph >> f) ins =
+                let
+                  val (x, ins') = ph ins
+                in
+                  (f x, ins')
+                end
+          fun empty ins = ([], ins)
+          fun repeat ph ins = (ph -- repeat ph >> (op::) || empty) ins
+          fun opt ph ins = ((ph >> SOME) || (empty >> (fn _ => NONE))) ins
+          fun ch c ins =
+               case input1 ins of
+                    NONE => raise XMLDecl
+                  | SOME (c', ins') =>
+                      if c = c' then (c, ins')
+                      else raise XMLDecl
+          fun s s ins =
+                let
+                  fun f (c, (s, ins)) =
+                        let
+                          val (c, ins') = ch c ins
+                        in
+                          (s ^ String.str c, ins')
+                        end
+                in
+                  List.foldl f ("", ins) (explode s)
+                end
+          fun space ins =
+                case input1 ins of
+                     NONE => raise XMLDecl
+                   | SOME (#" ", ins')    => ((), ins')
+                   | SOME (#"\009", ins') => ((), ins')
+                   | SOME (#"\010", ins') => ((), ins')
+                   | SOME (#"\013", ins') => ((), ins')
+                   | SOME _ => raise XMLDecl
+          val spaces = repeat space
+          fun number ins =
+                case input1 ins of
+                     NONE => raise XMLDecl
+                   | SOME (c, ins') =>
+                       if c >= #"0" andalso c <= #"9" then (c, ins')
+                       else raise XMLDecl
+          fun alpha ins =
+                case input1 ins of
+                     NONE => raise XMLDecl
+                   | SOME (c, ins') =>
+                       if (c >= #"a" andalso c <= #"z")
+                       orelse (c >= #"A" andalso c <= #"Z")
+                       then (c, ins')
+                       else raise XMLDecl
+          val alnum = alpha || number
+          val eq = spaces -- ch #"=" -- spaces
+          val versionNum =
+                s "1." --
+                ((number -- repeat number >> (op::)) >> implode)
+                >> (op^)
+          val versionInfo =
+                (spaces -- s "version" -- eq --
+                ((((ch #"'" -- versionNum >> #2) -- ch #"'") >> #1) ||
+                (((ch #"\"" -- versionNum >> #2) -- ch #"\"") >> #1)))
+                >> #2
+          val encName =
+                alpha -- repeat (alnum || ch #"." || ch #"_" || ch #"-")
+                >> implode o (op::)
+          val encodingDecl =
+                (spaces -- s "encoding" -- eq --
+                ((((ch #"'" -- encName >> #2) -- ch #"'") >> #1) ||
+                (((ch #"\"" -- encName >> #2) -- ch #"\"") >> #1)))
+                >> #2
+          val sdDecl =
+                (spaces -- s "standalone" -- eq --
+                ((((ch #"'" -- (s "yes" || s "no") >> #2) -- ch #"'") >> #1) ||
+                (((ch #"\"" -- (s "yes" || s "no") >> #2) -- ch #"\"") >> #1)))
+                >> #2
+          val xmlDecl =
+                (s "<?xml"
+                -- versionInfo -- (opt encodingDecl) -- (opt sdDecl)
+                -- spaces -- s "?>")
+                >> (fn (((((_, versionInfo), encodingDecl), sdDecl), _), _) =>
+                        (versionInfo, encodingDecl, sdDecl))
+        in
+          let val ((versionInfo, encodingDecl, sdDecl), ins') = xmlDecl ins in
+            ({ versionInfo = versionInfo,
+               encodingDecl = Option.getOpt (encodingDecl, ""),
+               sdDecl = Option.getOpt (sdDecl, "") },
+             ins')
+          end
+          handle XMLDecl =>
+            ({ versionInfo = "1.0",
+               encodingDecl = "UTF-8",
+               sdDecl = "no" },
+             ins)
+        end
+
   fun parseRaw input1 instream =
         let
+          val (xmlDecl, ins') = parseXMLDecl input1 instream
           (* 2.11 End-of-Line Handling *)
           fun input1' ins =
                 case input1 ins of
@@ -137,7 +246,7 @@ structure UXML = struct
                           | SOME (#"\010", ins'') => SOME (#"\010", ins'')
                           | SOME _ => SOME (#"\010", ins'))
                    | SOME (c, ins') => SOME (c, ins')
-          val strm = UXMLLexer.streamifyReader input1' instream
+          val strm = UXMLLexer.streamifyReader input1' ins'
           val sourcemap = AntlrStreamPos.mkSourcemap ()
           val parses = Parse.parse sourcemap strm
         in
