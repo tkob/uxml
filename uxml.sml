@@ -355,6 +355,25 @@ structure UXML = struct
                 in
                   List.foldl merge attributes defaults
                 end
+          fun lookupEntity "amp"  = SOME "&"
+            | lookupEntity "lt"   = SOME "<"
+            | lookupEntity "gt"   = SOME ">"
+            | lookupEntity "apos" = SOME "'"
+            | lookupEntity "quot" = SOME "\""
+            | lookupEntity name =
+                let
+                  fun lookup [] = NONE
+                    | lookup (Parse.Ast.EntityDeclIntSubset (_,
+                                Parse.Ast.GEDecl (_,
+                                  name',
+                                  Parse.Ast.EntityValueEntityDecl (_,
+                                    value)))::intsubsets) =
+                        if name = name' then SOME value
+                        else lookup intsubsets
+                    | lookup (_::intsubsets) = lookup intsubsets
+                in
+                  lookup intsubsets
+                end
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 fromProlog prolog @ [fromElement root] @ List.mapPartial fromMisc misc
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
@@ -445,7 +464,9 @@ structure UXML = struct
                     | normalize (Parse.Ast.CharRefAttValue (_, charRef)::attvalues) cs =
                         normalize attvalues (encode (Word.fromInt charRef)::cs)
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
-                        raise Fail "normalizeAttValue: unimplemented"
+                        (case lookupEntity reference of
+                             NONE => raise Fail (reference ^ " not found")
+                           | SOME value => normalize attvalues (value::cs))
                   val cdataNormalized = normalize attvalues []
                 in
                   if atttype = CDATA then cdataNormalized
@@ -459,7 +480,9 @@ structure UXML = struct
             | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
                 [CharData (encode (Word.fromInt charRef))]
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
-                raise Fail "ReferenceContent: unimplemented"
+                (case lookupEntity reference of
+                     NONE => raise Fail (reference ^ " not found")
+                   | SOME value => [CharData value])
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
                 [CharData cdsect]
             | fromContent (Parse.Ast.PIContent (span, pi)) = [fromPI pi]

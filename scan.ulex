@@ -15,12 +15,7 @@
           XMLCHARREF word
         end
 
-  fun xmlEntityRef "&amp;"  = XMLCHARS "&"
-    | xmlEntityRef "&lt;"   = XMLCHARS "<"
-    | xmlEntityRef "&gt;"   = XMLCHARS ">"
-    | xmlEntityRef "&apos;" = XMLCHARS "'"
-    | xmlEntityRef "&quot;" = XMLCHARS "\""
-    | xmlEntityRef r =
+  fun xmlEntityRef r =
         XMLENTITYREF (String.extract (r, 1, SOME (String.size r - 2)))
   
   val stringBuffer : string list ref = ref []
