@@ -31,50 +31,6 @@ structure UXML = struct
                                    uri      : uri }
   type document = content list
 
-  (* toCanon converts a document into James Clark's Canonical XML *)
-  local
-    fun escapeChar #"&" = "&amp;"
-      | escapeChar #"<" = "&lt;"
-      | escapeChar #">" = "&gt;"
-      | escapeChar #"\"" = "&quot;"
-      | escapeChar #"\009" = "&#9;"
-      | escapeChar #"\010" = "&#10;"
-      | escapeChar #"\013" = "&#13;"
-      | escapeChar c = String.str c
-    fun escape s = concat (map escapeChar (explode s))
-
-    fun makeName (ns, name) =
-          case ns of
-               NONE => name
-             | SOME ns => ns ^ ":" ^ name
-
-    and fromAttribute (Attr {nsprefix, name, attvalue}) =
-          let
-            val name = makeName (nsprefix, name)
-          in
-            name ^ "=\"" ^ escape attvalue ^ "\""
-          end
-      | fromAttribute (NSDecl {nsprefix, uri}) =
-          "xmlns:" ^ nsprefix ^ "=\"" ^ escape uri ^ "\""
-    and fromContent (CharData charData) = escape charData
-      | fromContent (Element {nsprefix, name, attributes, contents}) =
-          let
-            val name = makeName (nsprefix, name)
-          in
-            "<" ^ name
-            ^ concat (map (fn x => " " ^ fromAttribute x) attributes)
-            ^ ">"
-            ^ concat (map fromContent contents)
-            ^ "</" ^ name ^ ">"
-          end
-      | fromContent (Reference reference) = "&" ^ reference ^ ";" (* TODO *)
-      | fromContent (Comment comment) = ""
-      | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
-  in
-    fun toCanon contents =
-          concat (map fromContent contents)
-  end
-
   fun showDocument contents =
         "[" ^ String.concatWith "," (map showContent contents ) ^ "]"
   and showPi {target, content} =
@@ -357,6 +313,15 @@ structure UXML = struct
                 in
                   List.foldl merge attributes defaults
                 end
+          fun lookup [] name = NONE
+            | lookup (Parse.Ast.EntityDeclIntSubset (_,
+                        Parse.Ast.GEDecl (_,
+                          name',
+                          Parse.Ast.EntityValueEntityDecl (_,
+                            value)))::intsubsets) name =
+                if name = name' then SOME value
+                else lookup intsubsets name
+            | lookup (_::intsubsets) name = lookup intsubsets name
           fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
                 fromProlog prolog @ [fromElement root] @ List.mapPartial fromMisc misc
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
@@ -452,19 +417,7 @@ structure UXML = struct
                             | lookupEntity "apos" = SOME "'"
                             | lookupEntity "quot" = SOME "\""
                             | lookupEntity name =
-                                let
-                                  fun lookup [] = NONE
-                                    | lookup (Parse.Ast.EntityDeclIntSubset (_,
-                                                Parse.Ast.GEDecl (_,
-                                                  name',
-                                                  Parse.Ast.EntityValueEntityDecl (_,
-                                                    value)))::intsubsets) =
-                                        if name = name' then SOME value
-                                        else lookup intsubsets
-                                    | lookup (_::intsubsets) = lookup intsubsets
-                                in
-                                  Option.map deref (lookup intsubsets)
-                                end
+                                Option.map deref (lookup intsubsets name)
                           and deref s =
                                 let
                                   fun take f xs =
@@ -529,6 +482,16 @@ structure UXML = struct
                 [fromElement element]
             | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
                 [CharData (encode (Word.fromInt charRef))]
+            | fromContent (Parse.Ast.ReferenceContent (span, "amp")) =
+                [CharData "&"]
+            | fromContent (Parse.Ast.ReferenceContent (span, "lt")) =
+                [CharData "<"]
+            | fromContent (Parse.Ast.ReferenceContent (span, "gt")) =
+                [CharData ">"]
+            | fromContent (Parse.Ast.ReferenceContent (span, "apos")) =
+                [CharData "'"]
+            | fromContent (Parse.Ast.ReferenceContent (span, "quot")) =
+                [CharData "\""]
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
                 [Reference reference]
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
@@ -538,7 +501,7 @@ structure UXML = struct
                 [fromComment comment]
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
-          fromDocument rawParse
+          (lookup intsubsets, fromDocument rawParse)
         end
 
   fun parseFile fileName =
@@ -552,5 +515,54 @@ structure UXML = struct
             before TextIO.closeIn ins
           end
           handle e => (TextIO.closeIn ins; raise e)
+        end
+
+  (* toCanon converts a document into James Clark's Canonical XML *)
+  fun toCanon (entityResolver, contents) =
+        let
+          fun escapeChar #"&" = "&amp;"
+            | escapeChar #"<" = "&lt;"
+            | escapeChar #">" = "&gt;"
+            | escapeChar #"\"" = "&quot;"
+            | escapeChar #"\009" = "&#9;"
+            | escapeChar #"\010" = "&#10;"
+            | escapeChar #"\013" = "&#13;"
+            | escapeChar c = String.str c
+          fun escape s = concat (map escapeChar (explode s))
+
+          fun makeName (ns, name) =
+                case ns of
+                     NONE => name
+                   | SOME ns => ns ^ ":" ^ name
+
+          and fromAttribute (Attr {nsprefix, name, attvalue}) =
+                let
+                  val name = makeName (nsprefix, name)
+                in
+                  name ^ "=\"" ^ escape attvalue ^ "\""
+                end
+            | fromAttribute (NSDecl {nsprefix, uri}) =
+                "xmlns:" ^ nsprefix ^ "=\"" ^ escape uri ^ "\""
+          and fromContent (CharData charData) = escape charData
+            | fromContent (Element {nsprefix, name, attributes, contents}) =
+                let
+                  val name = makeName (nsprefix, name)
+                in
+                  "<" ^ name
+                  ^ concat (map (fn x => " " ^ fromAttribute x) attributes)
+                  ^ ">"
+                  ^ concat (map fromContent contents)
+                  ^ "</" ^ name ^ ">"
+                end
+            | fromContent (Reference reference) =
+                let
+                  val SOME entityValue = entityResolver reference
+                in
+                  concat (map fromContent (#2 (parse Substring.getc (Substring.full entityValue))))
+                end
+            | fromContent (Comment comment) = ""
+            | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
+        in
+          concat (map fromContent contents)
         end
 end
