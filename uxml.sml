@@ -219,14 +219,13 @@ structure UXML = struct
                             | _ => raise Fail "multiple parses"
           val intsubsets =
                 let
-                  val misc = case rawParse of
-                                  (Parse.Ast.Document (span, Parse.Ast.Prolog (_, misc), _, _)) => misc
+                  val Parse.Ast.Document (_, contents) = rawParse
                   fun getDoctypedecl [] = NONE
-                    | getDoctypedecl (Parse.Ast.DoctypeMisc (_, doctypedecl)::_) =
+                    | getDoctypedecl (Parse.Ast.DoctypeContent (_, doctypedecl)::_) =
                         SOME doctypedecl
                     | getDoctypedecl (_::misc) = getDoctypedecl misc
                 in
-                  case getDoctypedecl misc of
+                  case getDoctypedecl contents of
                        NONE => []
                      | SOME (Parse.Ast.Doctypedecl1 (_, _)) => []
                      | SOME (Parse.Ast.Doctypedecl2 (_, _, _)) => []
@@ -322,28 +321,20 @@ structure UXML = struct
                 if name = name' then SOME value
                 else lookup intsubsets name
             | lookup (_::intsubsets) name = lookup intsubsets name
-          fun fromDocument (Parse.Ast.Document (span, prolog, root, misc)) =
-                fromProlog prolog @ [fromElement root] @ List.mapPartial fromMisc misc
+          fun fromDocument (Parse.Ast.Document (span, contents)) =
+                map fromContent contents
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
             | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
           and fromPI (Parse.Ast.EmptyPI (span, target)) =
                 PI { target = target, content = "" }
             | fromPI (Parse.Ast.PI (span, target, content)) =
                 PI { target = target, content = concat (map fromChars content) }
-          and fromProlog (Parse.Ast.Prolog (span, misc)) = List.mapPartial fromMisc misc
-          and fromMisc (Parse.Ast.CommetnMisc (span, comment)) =
-                SOME (fromComment comment)
-            | fromMisc (Parse.Ast.PIMisc (span, pi)) = SOME (fromPI pi)
-            | fromMisc (Parse.Ast.SMisc (span, s)) =
-                if List.all Char.isSpace (explode s) then NONE
-                else raise Fail "non-space char in misc"
-            | fromMisc (Parse.Ast.DoctypeMisc (span, doctype)) = NONE
           and fromElement (Parse.Ast.EmptyElement (span, emptyElemTag)) =
                 fromEmptyElemTag emptyElemTag
             | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
                 let
                   val (nsprefix, name, attributes) = fromSTag sTag
-                  val contents = List.concat (map fromContent contents)
+                  val contents = map fromContent contents
                   val (nsprefix', name') = fromETag eTag
                   (* TODO: WFC: Element Type Match *)
                 in
@@ -477,31 +468,42 @@ structure UXML = struct
                     String.concatWith " " (String.tokens (fn c => c = #" ") cdataNormalized)
                 end
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
-                [CharData (fromChars chars)]
+                CharData (fromChars chars)
             | fromContent (Parse.Ast.ElementContent (span, element)) =
-                [fromElement element]
+                fromElement element
             | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
-                [CharData (encode (Word.fromInt charRef))]
+                CharData (encode (Word.fromInt charRef))
             | fromContent (Parse.Ast.ReferenceContent (span, "amp")) =
-                [CharData "&"]
+                CharData "&"
             | fromContent (Parse.Ast.ReferenceContent (span, "lt")) =
-                [CharData "<"]
+                CharData "<"
             | fromContent (Parse.Ast.ReferenceContent (span, "gt")) =
-                [CharData ">"]
+                CharData ">"
             | fromContent (Parse.Ast.ReferenceContent (span, "apos")) =
-                [CharData "'"]
+                CharData "'"
             | fromContent (Parse.Ast.ReferenceContent (span, "quot")) =
-                [CharData "\""]
+                CharData "\""
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
-                [Reference reference]
+                Reference reference
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
-                [CharData cdsect]
-            | fromContent (Parse.Ast.PIContent (span, pi)) = [fromPI pi]
+                CharData cdsect
+            | fromContent (Parse.Ast.PIContent (span, pi)) = fromPI pi
             | fromContent (Parse.Ast.CommentContent (span, comment)) =
-                [fromComment comment]
+                fromComment comment
+            | fromContent (Parse.Ast.DoctypeContent (_, _)) = CharData ""
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
           (lookup intsubsets, fromDocument rawParse)
+        end
+
+  fun parseDocument input1 instream =
+        let
+          val (entityResolver, contents) = parse input1 instream
+          fun trim [] = []
+            | trim (CharData _::contents) = trim contents
+            | trim (content::contents) = content::trim contents
+        in
+          (entityResolver, trim contents)
         end
 
   fun parseFile fileName =
@@ -511,7 +513,7 @@ structure UXML = struct
           let
             val sourcemap = AntlrStreamPos.mkSourcemap' fileName
           in
-            parse TextIO.StreamIO.input1 (TextIO.getInstream ins)
+            parseDocument TextIO.StreamIO.input1 (TextIO.getInstream ins)
             before TextIO.closeIn ins
           end
           handle e => (TextIO.closeIn ins; raise e)

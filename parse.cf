@@ -48,7 +48,12 @@ token IMPLIED ;
 token FIXED ;
 
 -- [1] document ::= prolog element Misc*
-Document. Document ::= Prolog Element [Misc] ;
+-- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
+-- Note1: Although this rule allows at most one occurence of doctypedecl,
+--        we regard doctypedecl as a Misc to simplify syntax.
+-- Note2: Do not parse XMLDecl, since it is preprocessed.
+-- Note3: Document is parsed as list of contents to simplify syntax.
+Document. Document ::= [Content] ;
 
 -- [10] AttValue ::= '"' ([^<&"] | Reference)* '"'
 --                |  "'" ([^<&'] | Reference)* "'"
@@ -65,11 +70,6 @@ Comment.      Comment ::= LXMLCOMMENT XMLCHARS RXMLCOMMENT ;
 EmptyPI. PI ::= LPI RPI ;
 PI.      PI ::= LPI [Chars] RPI ;
 
--- [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
--- Note: Although this rule allows at most one occurence of doctypedecl,
---       we regard doctypedecl as a Misc to simplify syntax.
---       Do not parse XMLDecl, since it is preprocessed
-Prolog. Prolog ::= [Misc] ;
 
 -- [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
 Doctypedecl1. Doctypedecl ::= LDOCTYPE XMLNAME RTAG ;
@@ -87,13 +87,6 @@ EntityDeclIntSubset.  IntSubset ::= EntityDecl ;
 NotationDeclIntSubset.IntSubset ::= NotationDecl ;
 PIIntSubset.          IntSubset ::= PI ;
 separator IntSubset "" ;
-
--- [27] Misc ::= Comment | PI | S
-CommetnMisc. Misc ::= Comment ;
-PIMisc.      Misc ::= PI ;
-SMisc.       Misc ::= XMLCHARS ;
-DoctypeMisc. Misc ::= Doctypedecl ;
-separator Misc "" ;
 
 -- [39] element ::= EmptyElemTag | STag content ETag
 EmptyElement. Element ::= EmptyElemTag ;
@@ -117,6 +110,7 @@ ReferenceContent. Content ::= XMLENTITYREF ;
 CDSectContent.    Content ::= XMLCDSECT ;
 PIContent.        Content ::= PI ;
 CommentContent.   Content ::= Comment ;
+DoctypeContent.   Content ::= Doctypedecl ;
 separator Content "" ;
 
 -- [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
