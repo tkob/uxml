@@ -376,7 +376,7 @@ structure UXML = struct
             | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
                 let
                   val (nsprefix, name, attributes) = fromSTag sTag
-                  val contents = map fromContent contents
+                  val contents = List.concat (map fromContent contents)
                   val (nsprefix', name') = fromETag eTag
                   (* TODO: WFC: Element Type Match *)
                 in
@@ -453,18 +453,18 @@ structure UXML = struct
                     String.concatWith " " (String.tokens (fn c => c = #" ") cdataNormalized)
                 end
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
-                CharData (fromChars chars)
+                [CharData (fromChars chars)]
             | fromContent (Parse.Ast.ElementContent (span, element)) =
-                fromElement element
+                [fromElement element]
             | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
-                CharData (encode (Word.fromInt charRef))
+                [CharData (encode (Word.fromInt charRef))]
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
                 raise Fail "ReferenceContent: unimplemented"
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
-                CharData cdsect
-            | fromContent (Parse.Ast.PIContent (span, pi)) = fromPI pi
+                [CharData cdsect]
+            | fromContent (Parse.Ast.PIContent (span, pi)) = [fromPI pi]
             | fromContent (Parse.Ast.CommentContent (span, comment)) =
-                fromComment comment
+                [fromComment comment]
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
           fromDocument rawParse
