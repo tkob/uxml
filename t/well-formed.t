@@ -4,9 +4,9 @@
 - CM.make "test.cm";
 ...
 val it = true : bool
-- fun numParses s = length (UXML.parseRaw Substring.getc (Substring.full s));
+- fun parse s = (UXML.parseDocument Substring.getc (Substring.full s); true);
 ...
-val numParses = fn : string -> int
+val parse = fn : string -> bool
 ```
 
 # Well-formed XML documents
@@ -14,229 +14,229 @@ val numParses = fn : string -> int
 ## WF1
 
 ```
-- numParses "<r/>";
-val it = 1 : int
+- parse "<r/>";
+val it = true : bool
 ```
 
 ## WF2
 
 ```
-- numParses "<r />";
-val it = 1 : int
+- parse "<r />";
+val it = true : bool
 ```
 
 ## WF3
 
 ```
-- numParses "<r /> ";
-val it = 1 : int
+- parse "<r /> ";
+val it = true : bool
 ```
 
 ## WF4
 
 ```
-- numParses "<?xml version='1.0'?><r/>";
-val it = 1 : int
+- parse "<?xml version='1.0'?><r/>";
+val it = true : bool
 ```
 
 ## WF5
 
 ```
-- numParses "<?xml version = '1.0' ?><r/>";
-val it = 1 : int
+- parse "<?xml version = '1.0' ?><r/>";
+val it = true : bool
 ```
 
 ## WF6
 
 ```
-- numParses "<?xml version=\"1.0\"?><r/>";
-val it = 1 : int
+- parse "<?xml version=\"1.0\"?><r/>";
+val it = true : bool
 ```
 
 ## WF7
 
 ```
-- numParses "<?xml version = \"1.0\" ?><r/>";
-val it = 1 : int
+- parse "<?xml version = \"1.0\" ?><r/>";
+val it = true : bool
 ```
 
 ## WF8
 
 ```
-- numParses "<r></r>";
-val it = 1 : int
+- parse "<r></r>";
+val it = true : bool
 ```
 
 ## WF9
 
 ```
-- numParses "<r ></r >";
-val it = 1 : int
+- parse "<r ></r >";
+val it = true : bool
 ```
 
 ## WF10
 
 ```
-- numParses "<r att1=''></r>";
-val it = 1 : int
+- parse "<r att1=''></r>";
+val it = true : bool
 ```
 
 ## WF11
 
 ```
-- numParses "<r att1=''/>";
-val it = 1 : int
+- parse "<r att1=''/>";
+val it = true : bool
 ```
 
 ## WF12
 
 ```
-- numParses "<r att1='' ></r>";
-val it = 1 : int
+- parse "<r att1='' ></r>";
+val it = true : bool
 ```
 
 ## WF13
 
 ```
-- numParses "<r att1='' />";
-val it = 1 : int
+- parse "<r att1='' />";
+val it = true : bool
 ```
 
 ## WF14
 
 ```
-- numParses "<r att1=\"\"/>";
-val it = 1 : int
+- parse "<r att1=\"\"/>";
+val it = true : bool
 ```
 
 ## WF15
 
 ```
-- numParses "<r att1='' att2=''/>";
-val it = 1 : int
+- parse "<r att1='' att2=''/>";
+val it = true : bool
 ```
 
 ## WF16
 ```
-- numParses "<r><c/></r>";
-val it = 1 : int
+- parse "<r><c/></r>";
+val it = true : bool
 ```
 
 ## WF17
 
 ```
-- numParses "<r><c/><c/></r>";
-val it = 1 : int
+- parse "<r><c/><c/></r>";
+val it = true : bool
 ```
 
 ## WF18
 
 ```
-- numParses "<r>x<c/>y<c/>z</r>";
-val it = 1 : int
+- parse "<r>x<c/>y<c/>z</r>";
+val it = true : bool
 ```
 
 ## WF19
 
 ```
-- numParses "<r><![CDATA[&><]]></r>";
-val it = 1 : int
+- parse "<r><![CDATA[&><]]></r>";
+val it = true : bool
 ```
 
 ## WF20
 
 ```
-- numParses "<r><?p?></r>";
-val it = 1 : int
+- parse "<r><?p?></r>";
+val it = true : bool
 ```
 
 ## WF21
 
 ```
-- numParses "<r><?p ?></r>";
-val it = 1 : int
+- parse "<r><?p ?></r>";
+val it = true : bool
 ```
 
 ## WF22
 
 ```
-- numParses "<r><?p abc?></r>";
-val it = 1 : int
+- parse "<r><?p abc?></r>";
+val it = true : bool
 ```
 
 ## WF23
 
 ```
-- numParses "<r><?p ??></r>";
-val it = 1 : int
+- parse "<r><?p ??></r>";
+val it = true : bool
 ```
 
 ## WF24
 
 ```
-- numParses "<r><?p abc??></r>";
-val it = 1 : int
+- parse "<r><?p abc??></r>";
+val it = true : bool
 ```
 
 ## WF25
 
 ```
-- numParses "<r><?p ?abc?></r>";
-val it = 1 : int
+- parse "<r><?p ?abc?></r>";
+val it = true : bool
 ```
 
 ## WF26
 
 ```
-- numParses "<?p abc?><r/>";
-val it = 1 : int
+- parse "<?p abc?><r/>";
+val it = true : bool
 ```
 
 ## WF27
 
 ```
-- numParses "<r/><?p abc?>";
-val it = 1 : int
+- parse "<r/><?p abc?>";
+val it = true : bool
 ```
 
 ## WF28
 
 ```
-- numParses "<r>&amp;&gt;&lt;&apos;&quot;</r>";
-val it = 1 : int
+- parse "<r>&amp;&gt;&lt;&apos;&quot;</r>";
+val it = true : bool
 ```
 
 ## WF29
 
 ```
-- numParses "<r>&#x0021;&#33;</r>";
-val it = 1 : int
+- parse "<r>&#x0021;&#33;</r>";
+val it = true : bool
 ```
 
 ## WF30
 
 ```
-- numParses "<r><!-- declarations for <head> & <body> --></r>";
-val it = 1 : int
+- parse "<r><!-- declarations for <head> & <body> --></r>";
+val it = true : bool
 ```
 
 ## WF31
 
 ```
-- numParses "<r><!----></r>";
-val it = 1 : int
+- parse "<r><!----></r>";
+val it = true : bool
 ```
 
 ## WF32
 
 ```
-- numParses "<!-- declarations for <head> & <body> --><r/>";
-val it = 1 : int
+- parse "<!-- declarations for <head> & <body> --><r/>";
+val it = true : bool
 ```
 
 ## WF33
 
 ```
-- numParses "<r/><!-- declarations for <head> & <body> -->";
-val it = 1 : int
+- parse "<r/><!-- declarations for <head> & <body> -->";
+val it = true : bool
 ```

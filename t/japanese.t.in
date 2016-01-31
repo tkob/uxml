@@ -4,13 +4,13 @@ m4_divert(0)dnl
     - CM.make "test.cm";
     ...
     val it = true : bool
-    - fun parse fileName = UXML.parseRaw TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName);
+    - fun parse fileName = (UXML.parseDocument TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName); true);
     ...
-    val parse = fn : string -> ?.Parse.Ast.document list
+    val parse = fn : string -> bool
 
 m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xmlconf/japanese/*utf-8*.xml))), [
 [#] file
 
-    - length (parse "file");
-    val it = 1 : int
+    - parse "file";
+    val it = true : bool
 ])

@@ -4,19 +4,19 @@ m4_divert(0)dnl
     - CM.make "test.cm";
     ...
     val it = true : bool
-    - fun parse fileName = UXML.parseRaw TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName);
+    - fun parse fileName = (UXML.parseDocument TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName); true);
     ...
-    val parse = fn : string -> ?.Parse.Ast.document list
+    val parse = fn : string -> bool
 
 m4_for([num], [1], [48], [1], [[#] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
 
-    - length (parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml");
-    val it = 1 : int
+    - parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml";
+    val it = true : bool
 
 ])
 m4_for([num], [53], [110], [1], [[#] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
 
-    - length (parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml");
-    val it = 1 : int
+    - parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml";
+    val it = true : bool
 
 ])
