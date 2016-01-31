@@ -362,14 +362,6 @@ structure UXML = struct
                         in
                           deref' (tl cs') (encode word::acc)
                         end
-                    | deref' (#"&"::cs) acc =
-                        let
-                          val (name, cs') = take Char.isAlpha cs
-                          val #";" = hd cs'
-                          val SOME name = lookupEntity (implode name)
-                        in
-                          deref' (tl cs') (name::acc)
-                        end
                     | deref' (c::cs) acc = deref' cs (String.str c::acc)
                 in
                   deref' (explode s) []
