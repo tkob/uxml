@@ -190,21 +190,7 @@ structure UXML = struct
 
   fun parseRaw input1 instream =
         let
-          val (xmlDecl, ins') = parseXMLDecl input1 instream
-          (* 2.11 End-of-Line Handling *)
-          fun input1' ins =
-                case input1 ins of
-                     NONE => NONE
-                   (* translating both the two-character sequence #xD #xA and
-                    * any #xD that is not followed by #xA to a single #xA
-                    * character *)
-                   | SOME (#"\013", ins') =>
-                       (case input1 ins' of
-                            NONE => SOME (#"\010", ins')
-                          | SOME (#"\010", ins'') => SOME (#"\010", ins'')
-                          | SOME _ => SOME (#"\010", ins'))
-                   | SOME (c, ins') => SOME (c, ins')
-          val strm = UXMLLexer.streamifyReader input1' ins'
+          val strm = UXMLLexer.streamifyReader input1 instream
           val sourcemap = AntlrStreamPos.mkSourcemap ()
           val parses = Parse.parse sourcemap strm
         in
@@ -495,7 +481,21 @@ structure UXML = struct
 
   fun parseDocument input1 instream =
         let
-          val (entityResolver, contents) = parse input1 instream
+          val (xmlDecl, ins') = parseXMLDecl input1 instream
+          (* 2.11 End-of-Line Handling *)
+          fun input1' ins =
+                case input1 ins of
+                     NONE => NONE
+                   (* translating both the two-character sequence #xD #xA and
+                    * any #xD that is not followed by #xA to a single #xA
+                    * character *)
+                   | SOME (#"\013", ins') =>
+                       (case input1 ins' of
+                            NONE => SOME (#"\010", ins')
+                          | SOME (#"\010", ins'') => SOME (#"\010", ins'')
+                          | SOME _ => SOME (#"\010", ins'))
+                   | SOME (c, ins') => SOME (c, ins')
+          val (entityResolver, contents) = parse input1' ins'
           fun trim [] = []
             | trim (CharData _::contents) = trim contents
             | trim (content::contents) = content::trim contents
