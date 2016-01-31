@@ -548,6 +548,8 @@ structure UXML = struct
             | fromContent (Element {nsprefix, name, attributes, contents}) =
                 let
                   val name = makeName (nsprefix, name)
+                  fun gt (a, b) = makeAttrName a > makeAttrName b
+                  val attributes = ListMergeSort.sort gt attributes
                 in
                   "<" ^ name
                   ^ concat (map (fn x => " " ^ fromAttribute x) attributes)
