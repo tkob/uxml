@@ -55,6 +55,14 @@ token FIXED ;
 -- Note3: Document is parsed as list of contents to simplify syntax.
 Document. Document ::= [Content] ;
 
+-- [9] EntityValue ::= '"' ([^%&"] | PEReference | Reference)* '"'
+--                  |  "'" ([^%&'] | PEReference | Reference)* "'"
+CharDataEntityValue.  EntityValue ::= XMLCHARS ;
+PERefEntityValue.     EntityValue ::= XMLPEREF ;
+CharRefEntityValue.   EntityValue ::= XMLCHARREF ;
+EntityRefEntityValue. EntityValue ::= XMLENTITYREF ;
+separator EntityValue "" ;
+
 -- [10] AttValue ::= '"' ([^<&"] | Reference)* '"'
 --                |  "'" ([^<&'] | Reference)* "'"
 CharDataAttValue.  AttValue ::= XMLCHARS ;
@@ -168,12 +176,12 @@ GEDecl. EntityDecl ::= LENTITYDECL XMLNAME EntityDef RTAG ;
 PEDecl. EntityDecl ::= LENTITYDECL PERCENT XMLNAME PEDef RTAG ;
 
 -- [73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
-EntityValueEntityDecl. EntityDef ::= XMLCHARS ;
+EntityValueEntityDecl. EntityDef ::= [EntityValue] ;
 ExternalIDEntityDecl.  EntityDef ::= ExternalID ;
 NDataDeclEntityDecl.   EntityDef ::= ExternalID NDataDecl ;
 
 -- [74] PEDef ::= EntityValue | ExternalID
-EntityValuePEDef. PEDef ::= XMLCHARS ;
+EntityValuePEDef. PEDef ::= [EntityValue] ;
 ExternalIDPEDef.  PEDef ::= ExternalID ;
 
 -- [75] ExternalID ::= 'SYSTEM' S SystemLiteral

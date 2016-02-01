@@ -18,6 +18,9 @@
   fun xmlEntityRef r =
         XMLENTITYREF (String.extract (r, 1, SOME (String.size r - 2)))
   
+  fun xmlPERef r =
+        XMLPEREF (String.extract (r, 1, SOME (String.size r - 2)))
+
   val stringBuffer : string list ref = ref []
   fun append (sb, s : string) = sb := s :: (!sb)
   fun toString sb = concat (rev (!sb)) before sb := []
@@ -31,6 +34,8 @@
 XML_COMMENT ELEMENT_DECL ATTLIST_DECL ENTITY_DECL NOTATION_DECL
 DOCTYPE_COMMENT DOCTYPE_PI DOCTYPE_PI_CONTENT
 ATTLIST_QUOT ATTLIST_APOS
+ENTITY_VALUE_QUOT ENTITY_VALUE_APOS
+SYSTEMID_PUBID
 ;
 
 (* [2] Char ::=
@@ -141,7 +146,7 @@ ATTLIST_QUOT ATTLIST_APOS
 
 <DOCTYPE>">" => (YYBEGIN INITIAL; RTAG);
 <DOCTYPE>{xmlS} => (continue());
-<DOCTYPE>{xmlPEReference} => (XMLPEREF(yytext));
+<DOCTYPE>{xmlPEReference} => (xmlPERef yytext);
 <DOCTYPE>"PUBLIC" => (PUBLIC);
 <DOCTYPE>"SYSTEM" => (SYSTEM);
 <DOCTYPE>{xmlName} => (XMLNAME(yytext));
@@ -202,13 +207,31 @@ ATTLIST_QUOT ATTLIST_APOS
 
 <ENTITY_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <ENTITY_DECL>{xmlS} => (continue());
-<ENTITY_DECL>"PUBLIC" => (PUBLIC);
-<ENTITY_DECL>"SYSTEM" => (SYSTEM);
-<ENTITY_DECL>"NDATA" => (NDATA);
+<ENTITY_DECL>"PUBLIC" => (YYBEGIN SYSTEMID_PUBID; PUBLIC);
+<ENTITY_DECL>"SYSTEM" => (YYBEGIN SYSTEMID_PUBID; SYSTEM);
 <ENTITY_DECL>{xmlName} => (XMLNAME(yytext));
 <ENTITY_DECL>"%" => (PERCENT);
-<ENTITY_DECL>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
-<ENTITY_DECL>"'" ([^'])* "'" => (XMLCHARS(trimQuot yytext));
+<ENTITY_DECL>[\"] => (YYBEGIN ENTITY_VALUE_QUOT; continue());
+<ENTITY_DECL>[\'] => (YYBEGIN ENTITY_VALUE_APOS; continue());
+
+<ENTITY_VALUE_QUOT>[^%&"]+ => (XMLCHARS(yytext));
+<ENTITY_VALUE_QUOT>{xmlPEReference} => (xmlPERef yytext);
+<ENTITY_VALUE_QUOT>{xmlCharRef} => (xmlCharRef yytext);
+<ENTITY_VALUE_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
+<ENTITY_VALUE_QUOT>[\"] => (YYBEGIN ENTITY_DECL; continue());
+
+<ENTITY_VALUE_APOS>[^%&']+ => (XMLCHARS(yytext));
+<ENTITY_VALUE_APOS>{xmlPEReference} => (xmlPERef yytext);
+<ENTITY_VALUE_APOS>{xmlCharRef} => (xmlCharRef yytext);
+<ENTITY_VALUE_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
+<ENTITY_VALUE_APOS>[\'] => (YYBEGIN ENTITY_DECL; continue());
+
+<SYSTEMID_PUBID>">" => (YYBEGIN DOCTYPE; RTAG);
+<SYSTEMID_PUBID>{xmlS} => (continue());
+<SYSTEMID_PUBID>"NDATA" => (NDATA);
+<SYSTEMID_PUBID>{xmlName} => (XMLNAME(yytext));
+<SYSTEMID_PUBID>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
+<SYSTEMID_PUBID>"'" ([^'])* "'" => (XMLCHARS(trimQuot yytext));
 
 <NOTATION_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <NOTATION_DECL>{xmlS} => (continue());

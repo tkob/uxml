@@ -203,44 +203,6 @@ structure UXML = struct
                               [] => raise Fail "no parses"
                             | [parse] => parse
                             | _ => raise Fail "multiple parses"
-          fun deref s =
-                let
-                  fun take f xs =
-                        let
-                          fun take' [] acc = (rev acc, [])
-                            | take' (x::xs) acc =
-                                if (f x) then take' xs (x::acc)
-                                else (rev acc, x::xs)
-                        in
-                          take' xs []
-                        end
-                  fun deref' [] acc = concat (rev acc)
-                    | deref' (#"&":: #"#":: #"x"::cs) acc =
-                        let
-                          val (digits, cs') = take Char.isHexDigit cs
-                          val #";" = hd cs'
-                          val SOME word =
-                            StringCvt.scanString
-                            (Word.scan StringCvt.HEX)
-                            (implode digits)
-                        in
-                          deref' (tl cs') (encode word::acc)
-                        end
-                    | deref' (#"&":: #"#"::cs) acc =
-                        let
-                          val (digits, cs') = take Char.isDigit cs
-                          val #";" = hd cs'
-                          val SOME word =
-                            StringCvt.scanString
-                            (Word.scan StringCvt.DEC)
-                            (implode digits)
-                        in
-                          deref' (tl cs') (encode word::acc)
-                        end
-                    | deref' (c::cs) acc = deref' cs (String.str c::acc)
-                in
-                  deref' (explode s) []
-                end
           val intsubsets =
                 let
                   val Parse.Ast.Document (_, contents) = rawParse
@@ -266,7 +228,24 @@ structure UXML = struct
                           name,
                           Parse.Ast.EntityValueEntityDecl (_,
                             value)))::intsubsets) acc =
-                        makeSymbolTable intsubsets ((name, deref value)::acc)
+                        let
+                          fun deref [] acc = concat (rev acc)
+                            | deref (Parse.Ast.CharDataEntityValue (_, charData)::entityValues) acc =
+                                deref entityValues (charData::acc)
+                            | deref (Parse.Ast.PERefEntityValue (_, reference)::entityValues) acc =
+                                let
+                                  val value = raise Fail "deref"
+                                in
+                                  deref entityValues (value::acc)
+                                end
+                            | deref (Parse.Ast.CharRefEntityValue (_, charRef)::entityValues) acc =
+                                deref entityValues (encode (Word.fromInt charRef)::acc)
+                            | deref (Parse.Ast.EntityRefEntityValue (_, reference)::entityValues) acc =
+                                (* Entity reference is bypassed *)
+                                deref entityValues ("&" ^ reference ^ ";"::acc)
+                        in
+                          makeSymbolTable intsubsets ((name, deref value [])::acc)
+                        end
                     | makeSymbolTable (Parse.Ast.PEReferenceIntSubset _::_) acc =
                         rev acc
                     | makeSymbolTable (_::intsubsets) acc =
