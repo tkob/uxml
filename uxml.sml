@@ -274,6 +274,20 @@ structure UXML = struct
                 in
                   makeSymbolTable intsubsets []
                 end
+          fun lookupEntity "amp"  = SOME "&"
+            | lookupEntity "lt"   = SOME "<"
+            | lookupEntity "gt"   = SOME ">"
+            | lookupEntity "apos" = SOME "'"
+            | lookupEntity "quot" = SOME "\""
+            | lookupEntity name =
+                let
+                  fun lookup [] = NONE
+                    | lookup ((name', value)::symbolTable) =
+                        if name = name' then SOME value
+                        else lookup symbolTable
+                in
+                  lookup symbolTable
+                end
           fun lookupAtttype (elemName, attName) =
                 let
                   fun unboxName (Parse.Ast.Name (_, name)) = name
@@ -352,22 +366,6 @@ structure UXML = struct
                 in
                   List.foldl merge attributes defaults
                 end
-          fun lookup [] name = NONE
-            | lookup (Parse.Ast.EntityDeclIntSubset (_,
-                        Parse.Ast.GEDecl (_,
-                          name',
-                          Parse.Ast.EntityValueEntityDecl (_,
-                            value)))::intsubsets) name =
-                if name = name' then SOME value
-                else lookup intsubsets name
-            | lookup (_::intsubsets) name = lookup intsubsets name
-          fun lookupEntity "amp"  = SOME "&"
-            | lookupEntity "lt"   = SOME "<"
-            | lookupEntity "gt"   = SOME ">"
-            | lookupEntity "apos" = SOME "'"
-            | lookupEntity "quot" = SOME "\""
-            | lookupEntity name =
-                Option.map deref (lookup intsubsets name)
           fun fromDocument (Parse.Ast.Document (span, contents)) =
                 map fromContent contents
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
