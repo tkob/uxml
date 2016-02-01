@@ -7,16 +7,76 @@ m4_divert(0)dnl
     - fun parse fileName = (UXML.parseDocument TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName); true);
     ...
     val parse = fn : string -> bool
+    - fun readFile fileName = let val ins = TextIO.openIn fileName in TextIO.inputAll ins before TextIO.closeIn ins end;
+    ...
+    val readFile = fn : string -> TextIO.vector
+    - fun assert actual expected = actual = expected orelse (print ("expected: " ^ expected ^ ", but got: " ^ actual ^ "\n"); false);
+    val assert = fn : string -> string -> bool
 
-m4_for([num], [1], [48], [1], [[#] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+# Parse valid stand-alone documents
+
+m4_for([num], [1], [48], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
 
     - parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml";
     val it = true : bool
 
 ])
-m4_for([num], [53], [110], [1], [[#] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+
+## 049-051 are skipped because of UTF-8
+
+## 052 is skipped because of a unicode char >= $#x10000;
+
+m4_for([num], [53], [110], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
 
     - parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml";
+    val it = true : bool
+
+])
+
+# Write documents as Canonical XML
+
+m4_for([num], [1], [48], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+
+    - assert ((UXML.toCanon o UXML.parseFile) "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml") (readFile "xmlconf/xmltest/valid/sa/out/m4_format([%03d], num).xml");
+    val it = true : bool
+
+])
+
+## 049-051 are skipped because of UTF-8
+
+## 052 is skipped because of a unicode char >= $#x10000;
+
+m4_for([num], [53], [68], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+
+    - assert ((UXML.toCanon o UXML.parseFile) "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml") (readFile "xmlconf/xmltest/valid/sa/out/m4_format([%03d], num).xml");
+    val it = true : bool
+
+])
+
+## 069.xml is skipped because of NOTATION
+
+m4_for([num], [70], [75], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+
+    - assert ((UXML.toCanon o UXML.parseFile) "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml") (readFile "xmlconf/xmltest/valid/sa/out/m4_format([%03d], num).xml");
+    val it = true : bool
+
+])
+
+## 076.xml is skipped because of NOTATION
+
+m4_for([num], [77], [88], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+
+    - assert ((UXML.toCanon o UXML.parseFile) "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml") (readFile "xmlconf/xmltest/valid/sa/out/m4_format([%03d], num).xml");
+    val it = true : bool
+
+])
+
+## 089.xml is skipped because of a unicode char >= $#x10000;
+## 090.xml and 091.xml are skipped because of NOTATION
+
+m4_for([num], [92], [110], [1], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+
+    - assert ((UXML.toCanon o UXML.parseFile) "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml") (readFile "xmlconf/xmltest/valid/sa/out/m4_format([%03d], num).xml");
     val it = true : bool
 
 ])
