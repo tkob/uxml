@@ -203,6 +203,44 @@ structure UXML = struct
                               [] => raise Fail "no parses"
                             | [parse] => parse
                             | _ => raise Fail "multiple parses"
+          fun deref s =
+                let
+                  fun take f xs =
+                        let
+                          fun take' [] acc = (rev acc, [])
+                            | take' (x::xs) acc =
+                                if (f x) then take' xs (x::acc)
+                                else (rev acc, x::xs)
+                        in
+                          take' xs []
+                        end
+                  fun deref' [] acc = concat (rev acc)
+                    | deref' (#"&":: #"#":: #"x"::cs) acc =
+                        let
+                          val (digits, cs') = take Char.isHexDigit cs
+                          val #";" = hd cs'
+                          val SOME word =
+                            StringCvt.scanString
+                            (Word.scan StringCvt.HEX)
+                            (implode digits)
+                        in
+                          deref' (tl cs') (encode word::acc)
+                        end
+                    | deref' (#"&":: #"#"::cs) acc =
+                        let
+                          val (digits, cs') = take Char.isDigit cs
+                          val #";" = hd cs'
+                          val SOME word =
+                            StringCvt.scanString
+                            (Word.scan StringCvt.DEC)
+                            (implode digits)
+                        in
+                          deref' (tl cs') (encode word::acc)
+                        end
+                    | deref' (c::cs) acc = deref' cs (String.str c::acc)
+                in
+                  deref' (explode s) []
+                end
           val intsubsets =
                 let
                   val Parse.Ast.Document (_, contents) = rawParse
@@ -219,6 +257,22 @@ structure UXML = struct
                          intsubsets
                      | SOME (Parse.Ast.Doctypedecl4 (_, _, _, intsubsets)) =>
                          intsubsets
+                end
+          val symbolTable : (name * string) list =
+                let
+                  fun makeSymbolTable [] acc = rev acc
+                    | makeSymbolTable (Parse.Ast.EntityDeclIntSubset (_,
+                        Parse.Ast.GEDecl (_,
+                          name,
+                          Parse.Ast.EntityValueEntityDecl (_,
+                            value)))::intsubsets) acc =
+                        makeSymbolTable intsubsets ((name, deref value)::acc)
+                    | makeSymbolTable (Parse.Ast.PEReferenceIntSubset _::_) acc =
+                        rev acc
+                    | makeSymbolTable (_::intsubsets) acc =
+                        makeSymbolTable intsubsets acc
+                in
+                  makeSymbolTable intsubsets []
                 end
           fun lookupAtttype (elemName, attName) =
                 let
@@ -314,44 +368,6 @@ structure UXML = struct
             | lookupEntity "quot" = SOME "\""
             | lookupEntity name =
                 Option.map deref (lookup intsubsets name)
-          and deref s =
-                let
-                  fun take f xs =
-                        let
-                          fun take' [] acc = (rev acc, [])
-                            | take' (x::xs) acc =
-                                if (f x) then take' xs (x::acc)
-                                else (rev acc, x::xs)
-                        in
-                          take' xs []
-                        end
-                  fun deref' [] acc = concat (rev acc)
-                    | deref' (#"&":: #"#":: #"x"::cs) acc =
-                        let
-                          val (digits, cs') = take Char.isHexDigit cs
-                          val #";" = hd cs'
-                          val SOME word =
-                            StringCvt.scanString
-                            (Word.scan StringCvt.HEX)
-                            (implode digits)
-                        in
-                          deref' (tl cs') (encode word::acc)
-                        end
-                    | deref' (#"&":: #"#"::cs) acc =
-                        let
-                          val (digits, cs') = take Char.isDigit cs
-                          val #";" = hd cs'
-                          val SOME word =
-                            StringCvt.scanString
-                            (Word.scan StringCvt.DEC)
-                            (implode digits)
-                        in
-                          deref' (tl cs') (encode word::acc)
-                        end
-                    | deref' (c::cs) acc = deref' cs (String.str c::acc)
-                in
-                  deref' (explode s) []
-                end
           fun fromDocument (Parse.Ast.Document (span, contents)) =
                 map fromContent contents
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
