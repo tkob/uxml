@@ -293,7 +293,7 @@ structure UXML = struct
                        * All attributes for which no declaration has been read
                        * SHOULD be treated by a non-validating processor as if
                        * declared CDATA *)
-                    | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = CDATA
                     | lookupElem (Parse.Ast.ElementdeclIntSubset _::intsubsets) = lookupElem intsubsets
                     | lookupElem (Parse.Ast.AttlistDeclIntSubset (_, Parse.Ast.AttlistDecl (_, elemName', attdefs))::intsubsets) =
                         if elemName = elemName' then
@@ -319,7 +319,7 @@ structure UXML = struct
                            | Parse.Ast.DefaultDecl (span, attvalue) =>
                                SOME (attName, attvalue)
                   fun lookupElem [] = []
-                    | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = lookupElem intsubsets
+                    | lookupElem (Parse.Ast.PEReferenceIntSubset _::intsubsets) = []
                     | lookupElem (Parse.Ast.ElementdeclIntSubset _::intsubsets) = lookupElem intsubsets
                     | lookupElem (Parse.Ast.AttlistDeclIntSubset (_, Parse.Ast.AttlistDecl (_, elemName', attdefs))::intsubsets) =
                         if elemName = elemName' then
