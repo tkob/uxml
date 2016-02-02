@@ -177,8 +177,8 @@ structure UXML = struct
         in
           let val ((versionInfo, encodingDecl, sdDecl), ins') = xmlDecl ins in
             ({ versionInfo = versionInfo,
-               encodingDecl = Option.getOpt (encodingDecl, ""),
-               sdDecl = Option.getOpt (sdDecl, "") },
+               encodingDecl = Option.getOpt (encodingDecl, "UTF-8"),
+               sdDecl = Option.getOpt (sdDecl, "no") },
              ins')
           end
           handle XMLDecl =>
