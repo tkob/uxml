@@ -1,6 +1,6 @@
 MLULEX = ml-ulex
 
-check: parse.sml scan.ulex.sml uxml.sml xmlconf t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
+check: parse.sml scan.ulex.sml uxml.sml xmlconf t/xmltest.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
 	prove -f --exec ./t/do-test
 
 xmlconf: xmlts20130923.tar.gz
@@ -10,8 +10,8 @@ xmlconf: xmlts20130923.tar.gz
 xmlts20130923.tar.gz:
 	wget http://www.w3.org/XML/Test/xmlts20130923.tar.gz
 
-t/xmltest-valid-sa.t: t/xmltest-valid-sa.t.in
-	autom4te -l m4sugar -o t/xmltest-valid-sa.t t/xmltest-valid-sa.t.in
+t/xmltest.t: t/xmltest.t.in
+	autom4te -l m4sugar -o t/xmltest.t t/xmltest.t.in
 
 t/ibm-valid.t: t/ibm-valid.t.in
 	autom4te -l m4sugar -o t/ibm-valid.t t/ibm-valid.t.in
@@ -35,6 +35,6 @@ scan.ulex.sml: scan.ulex
 	$(MLULEX) --strict-sml scan.ulex
 
 clean:
-	rm -f main parse.sml scan.ulex.sml t/xmltest-valid-sa.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
+	rm -f main parse.sml scan.ulex.sml t/xmltest.t t/ibm-valid.t t/sun-valid.t t/oasis-pass.t t/japanese.t
 
 .PHONY: check clean
