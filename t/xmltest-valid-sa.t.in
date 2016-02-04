@@ -15,36 +15,33 @@ m4_divert(0)dnl
 
 # Parse valid stand-alone documents
 
-m4_for([num], [1], [110], [1], [
-m4_bmatch(num,
-   [49], [## 049 is skipped because of UTF-16
-], [50], [## 050 is skipped because of UTF-16
-], [51], [## 051 is skipped because of UTF-16
-], [52], [## 052 is skipped because of a unicode char >= $#x10000;
-], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/xmltest/valid xmlconf/xmltest/invalid -type f -name '*.xml' | grep -v out | sort))), [
+m4_bmatch(file,
+   [xmlconf/xmltest/valid/sa/049.xml], [## file is skipped because of UTF-16
+], [xmlconf/xmltest/valid/sa/050.xml], [## file is skipped because of UTF-16
+], [xmlconf/xmltest/valid/sa/051.xml], [## file is skipped because of UTF-16
+], [xmlconf/xmltest/valid/sa/052.xml], [## file is skipped because of a unicode char >= $#x10000;
+], [[##] file
 
-    - parse "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml";
+    - parse "file";
     val it = true : bool
 
 ])])
 
 # Write documents as Canonical XML
 
-m4_for([num], [1], [110], [1], [
-m4_bmatch(num,
-   [49], [## 049 is skipped because of UTF-16
-], [50], [## 050 is skipped because of UTF-16
-], [51], [## 051 is skipped because of UTF-16
-], [52], [## 052 is skipped because of a unicode char >= $#x10000;
-], [69], [## 069.xml is skipped because of NOTATION
-], [76], [## 076.xml is skipped because of NOTATION
-], [89], [## 089.xml is skipped because of a unicode char >= $#x10000;
-], [90], [## 090.xml is skipped because of NOTATION
-], [91], [## 091.xml is skipped because of NOTATION
-], [[##] xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/xmltest -type f | grep out | sort))), [
+m4_bmatch(file,
+   [xmlconf/xmltest/valid/not-sa/out/022.xml], [
+], [xmlconf/xmltest/valid/sa/out/049.xml], [## file is skipped because of UTF-16
+], [xmlconf/xmltest/valid/sa/out/050.xml], [## file is skipped because of UTF-16
+], [xmlconf/xmltest/valid/sa/out/051.xml], [## file is skipped because of UTF-16
+], [xmlconf/xmltest/valid/sa/out/052.xml], [## file is skipped because of a unicode char >= $#x10000;
+], [xmlconf/xmltest/valid/sa/out/089.xml], [## file is skipped because of a unicode char >= $#x10000;
+], [[##] file
 
-    - assert ((UXML.toCanon o UXML.parseFile) "xmlconf/xmltest/valid/sa/m4_format([%03d], num).xml") (readFile "xmlconf/xmltest/valid/sa/out/m4_format([%03d], num).xml");
+    - val xmlFileName = "m4_chomp(m4_esyscmd(dirname $(dirname file)))/m4_chomp(m4_esyscmd(basename file))";
+    ...
+    - assert (UXML.toCanon (UXML.parseFile xmlFileName)) (XMLWF.canonicalizeFile "out" xmlFileName);
     val it = true : bool
-
 ])])
-
