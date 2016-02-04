@@ -346,7 +346,7 @@ structure UXML = struct
                   List.foldl merge attributes defaults
                 end
           fun fromDocument (Parse.Ast.Document (span, contents)) =
-                map fromContent contents
+                List.concat (map fromContent contents)
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
             | fromComment (Parse.Ast.Comment (span, comment)) = Comment comment
           and fromPI (Parse.Ast.EmptyPI (span, target)) =
@@ -358,7 +358,7 @@ structure UXML = struct
             | fromElement (Parse.Ast.Element (span, sTag, contents, eTag)) =
                 let
                   val (nsprefix, name, attributes) = fromSTag sTag
-                  val contents = map fromContent contents
+                  val contents = List.concat (map fromContent contents)
                   val (nsprefix', name') = fromETag eTag
                   (* TODO: WFC: Element Type Match *)
                 in
@@ -444,29 +444,38 @@ structure UXML = struct
                     String.concatWith " " (String.tokens (fn c => c = #" ") cdataNormalized)
                 end
           and fromContent (Parse.Ast.CharDataContent (span, chars)) =
-                CharData (fromChars chars)
+                [CharData (fromChars chars)]
             | fromContent (Parse.Ast.ElementContent (span, element)) =
-                fromElement element
+                [fromElement element]
             | fromContent (Parse.Ast.CharRefContent (span, charRef)) =
-                CharData (encode (Word.fromInt charRef))
+                [CharData (encode (Word.fromInt charRef))]
             | fromContent (Parse.Ast.ReferenceContent (span, "amp")) =
-                CharData "&"
+                [CharData "&"]
             | fromContent (Parse.Ast.ReferenceContent (span, "lt")) =
-                CharData "<"
+                [CharData "<"]
             | fromContent (Parse.Ast.ReferenceContent (span, "gt")) =
-                CharData ">"
+                [CharData ">"]
             | fromContent (Parse.Ast.ReferenceContent (span, "apos")) =
-                CharData "'"
+                [CharData "'"]
             | fromContent (Parse.Ast.ReferenceContent (span, "quot")) =
-                CharData "\""
+                [CharData "\""]
             | fromContent (Parse.Ast.ReferenceContent (span, reference)) =
-                Reference reference
+                [Reference reference]
             | fromContent (Parse.Ast.CDSectContent (span, cdsect)) =
-                CharData cdsect
-            | fromContent (Parse.Ast.PIContent (span, pi)) = fromPI pi
+                [CharData cdsect]
+            | fromContent (Parse.Ast.PIContent (span, pi)) = [fromPI pi]
             | fromContent (Parse.Ast.CommentContent (span, comment)) =
-                fromComment comment
-            | fromContent (Parse.Ast.DoctypeContent (_, _)) = CharData ""
+                [fromComment comment]
+            | fromContent (Parse.Ast.DoctypeContent (_, doctypedecl)) =
+                fromDoctypedecl doctypedecl
+          and fromDoctypedecl (Parse.Ast.Doctypedecl1 _) = []
+            | fromDoctypedecl (Parse.Ast.Doctypedecl2 _) = []
+            | fromDoctypedecl (Parse.Ast.Doctypedecl3 (_, _, intsubsets)) =
+                List.mapPartial fromIntSubset intsubsets
+            | fromDoctypedecl (Parse.Ast.Doctypedecl4 (_, _, _, intsubsets)) =
+                List.mapPartial fromIntSubset intsubsets
+          and fromIntSubset (Parse.Ast.PIIntSubset (_, pi)) = SOME (fromPI pi)
+            | fromIntSubset _ = NONE
           and fromChars (Parse.Ast.Chars (span, chars)) = chars
         in
           (lookupEntity, fromDocument rawParse)
