@@ -551,11 +551,10 @@ structure UXML = struct
                   ^ "</" ^ name ^ ">"
                 end
             | fromContent (Reference reference) =
-                let
-                  val SOME entityValue = entityResolver reference
-                in
-                  concat (map fromContent (#2 (parse Substring.getc (Substring.full entityValue))))
-                end
+                (case entityResolver reference of
+                     NONE => ""
+                   | SOME entityValue =>
+                       concat (map fromContent (#2 (parse Substring.getc (Substring.full entityValue)))))
             | fromContent (Comment comment) = ""
             | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
         in
