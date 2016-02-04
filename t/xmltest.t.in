@@ -7,9 +7,6 @@ m4_divert(0)dnl
     - fun parse fileName = (UXML.parseDocument TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName); true);
     ...
     val parse = fn : string -> bool
-    - fun readFile fileName = let val ins = TextIO.openIn fileName in TextIO.inputAll ins before TextIO.closeIn ins end;
-    ...
-    val readFile = fn : string -> TextIO.vector
     - fun assert actual expected = actual = expected orelse (print ("expected: " ^ expected ^ ", but got: " ^ actual ^ "\n"); false);
     val assert = fn : string -> string -> bool
 
