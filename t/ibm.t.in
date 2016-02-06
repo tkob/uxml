@@ -22,14 +22,11 @@ m4_bmatch(file, [xmlconf/ibm/valid/P02/ibm02v01.xml], [## P02 is skipped
 
 # Write documents as Canonical XML
 
-m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/ibm -type f | grep out | sort))), [
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/ibm/valid xmlconf/ibm/invalid -type f -name '*.xml' | grep -v out | sort))), [
 m4_bmatch(file,
-   [xmlconf/ibm/invalid/P51/out/ibm51i02.xml], [
-], [xmlconf/ibm/valid/P02/out/ibm02v01.xml], [## file is skipped because of a unicode char >= $#x10000;
+   [xmlconf/ibm/valid/P02/ibm02v01.xml], [## file is skipped because of a unicode char >= $#x10000;
 ], [[##] file
 
-    - val xmlFileName = "m4_chomp(m4_esyscmd(dirname $(dirname file)))/m4_chomp(m4_esyscmd(basename file))";
-    ...
-    - assert (UXML.toCanon (UXML.parseFile xmlFileName)) (XMLWF.canonicalizeFile "out" xmlFileName);
+    - assert (UXML.toCanon (UXML.parseFile "file")) (XMLWF.canonicalizeFile "out" "file");
     val it = true : bool
 ])])

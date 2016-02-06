@@ -7,10 +7,25 @@ m4_divert(0)dnl
     - fun parse fileName = (UXML.parseDocument TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName); true);
     ...
     val parse = fn : string -> bool
+    - fun assert actual expected = actual = expected orelse (print ("expected: " ^ expected ^ ", but got: " ^ actual ^ "\n"); false);
+    val assert = fn : string -> string -> bool
+
+# Parse well-formed documents
 
 m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xmlconf/japanese/*utf-8*.xml))), [
-[#] file
+m4_bmatch(file,
+   [[##] file
 
     - parse "file";
     val it = true : bool
-])
+])])
+
+# Write documents as Canonical XML
+
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xmlconf/japanese/*utf-8*.xml))), [
+m4_bmatch(file,
+   [[##] file
+
+    - assert (UXML.toCanon (UXML.parseFile "file")) (XMLWF.canonicalizeFile "out" "file");
+    val it = true : bool
+])])

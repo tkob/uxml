@@ -24,12 +24,12 @@ m4_bmatch(file,
 
 # Write documents as Canonical XML
 
-m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/sun -type f | grep out | sort))), [
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/sun/valid xmlconf/sun/invalid -type f -name '*.xml' | grep -v out | sort))), [
 m4_bmatch(file,
-   [[##] file
+   [xmlconf/sun/invalid/utf16b.xml], [## file is skipped because of UTF-16
+], [xmlconf/sun/invalid/utf16l.xml], [## file is skipped because of UTF-16
+], [[##] file
 
-    - val xmlFileName = "m4_chomp(m4_esyscmd(dirname $(dirname file)))/m4_chomp(m4_esyscmd(basename file))";
-    ...
-    - assert (UXML.toCanon (UXML.parseFile xmlFileName)) (XMLWF.canonicalizeFile "out" xmlFileName);
+    - assert (UXML.toCanon (UXML.parseFile "file")) (XMLWF.canonicalizeFile "out" "file");
     val it = true : bool
 ])])
