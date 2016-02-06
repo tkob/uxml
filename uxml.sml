@@ -434,7 +434,7 @@ structure UXML = struct
                         let
                           val entityValue =
                             case lookupEntity reference of
-                                 NONE => "&" ^ reference ^ ";"
+                                 NONE => ""
                                | SOME fragments =>
                                    let
                                      fun toString [] = ""
@@ -442,7 +442,7 @@ structure UXML = struct
                                            charData ^ toString fragments
                                        | toString (EntityRef name::fragments) =
                                            case lookupEntity name of
-                                                NONE => "&" ^ name ^ ";"
+                                                NONE => ""
                                               | SOME fragments' =>
                                                   toString fragments' ^ toString fragments
                                      val value = toString fragments
