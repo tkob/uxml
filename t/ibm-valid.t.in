@@ -7,11 +7,29 @@ m4_divert(0)dnl
     - fun parse fileName = (UXML.parseDocument TextIO.StreamIO.input1 ((TextIO.getInstream o TextIO.openIn) fileName); true);
     ...
     val parse = fn : string -> bool
+    - fun assert actual expected = actual = expected orelse (print ("expected: " ^ expected ^ ", but got: " ^ actual ^ "\n"); false);
+    val assert = fn : string -> string -> bool
 
-m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(ls xmlconf/ibm/valid/P*/*.xml))), [
-m4_bmatch(file, [P02/ibm02v01.xml], [# P02 is skipped
-], [[#] file
+# Parse well-formed documents
+
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/ibm/valid xmlconf/ibm/invalid -type f -name '*.xml' | grep -v out | sort))), [
+m4_bmatch(file, [xmlconf/ibm/valid/P02/ibm02v01.xml], [## P02 is skipped
+], [[##] file
 
     - parse "file";
+    val it = true : bool
+])])
+
+# Write documents as Canonical XML
+
+m4_foreach([file], m4_split(m4_normalize(m4_esyscmd(find xmlconf/ibm -type f | grep out | sort))), [
+m4_bmatch(file,
+   [xmlconf/ibm/invalid/P51/out/ibm51i02.xml], [
+], [xmlconf/ibm/valid/P02/out/ibm02v01.xml], [## file is skipped because of a unicode char >= $#x10000;
+], [[##] file
+
+    - val xmlFileName = "m4_chomp(m4_esyscmd(dirname $(dirname file)))/m4_chomp(m4_esyscmd(basename file))";
+    ...
+    - assert (UXML.toCanon (UXML.parseFile xmlFileName)) (XMLWF.canonicalizeFile "out" xmlFileName);
     val it = true : bool
 ])])
