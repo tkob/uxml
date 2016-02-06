@@ -15,6 +15,8 @@ structure UXML = struct
                    | NOTATION of name list
                    | ENUMERATION of nmtoken list
 
+  datatype fragment = CharFrag of string | EntityRef of name
+
   datatype content = CharData of string
                    | Element of { nsprefix   : name option,
                                   name       : name,
@@ -220,7 +222,7 @@ structure UXML = struct
                      | SOME (Parse.Ast.Doctypedecl4 (_, _, _, intsubsets)) =>
                          intsubsets
                 end
-          val symbolTable : (name * string) list =
+          val symbolTable : (name * fragment list) list =
                 let
                   fun makeSymbolTable [] acc = rev acc
                     | makeSymbolTable (Parse.Ast.EntityDeclIntSubset (_,
@@ -229,9 +231,9 @@ structure UXML = struct
                           Parse.Ast.EntityValueEntityDecl (_,
                             value)))::intsubsets) acc =
                         let
-                          fun deref [] acc = concat (rev acc)
+                          fun deref [] acc = rev acc
                             | deref (Parse.Ast.CharDataEntityValue (_, charData)::entityValues) acc =
-                                deref entityValues (charData::acc)
+                                deref entityValues (CharFrag charData::acc)
                             | deref (Parse.Ast.PERefEntityValue (_, reference)::entityValues) acc =
                                 let
                                   val value = raise Fail "deref"
@@ -239,10 +241,10 @@ structure UXML = struct
                                   deref entityValues (value::acc)
                                 end
                             | deref (Parse.Ast.CharRefEntityValue (_, charRef)::entityValues) acc =
-                                deref entityValues (encode (Word.fromInt charRef)::acc)
+                                deref entityValues (CharFrag (encode (Word.fromInt charRef))::acc)
                             | deref (Parse.Ast.EntityRefEntityValue (_, reference)::entityValues) acc =
                                 (* Entity reference is bypassed *)
-                                deref entityValues ("&" ^ reference ^ ";"::acc)
+                                deref entityValues (EntityRef reference::acc)
                         in
                           makeSymbolTable intsubsets ((name, deref value [])::acc)
                         end
@@ -253,11 +255,11 @@ structure UXML = struct
                 in
                   makeSymbolTable intsubsets []
                 end
-          fun lookupEntity "amp"  = SOME "&"
-            | lookupEntity "lt"   = SOME "<"
-            | lookupEntity "gt"   = SOME ">"
-            | lookupEntity "apos" = SOME "'"
-            | lookupEntity "quot" = SOME "\""
+          fun lookupEntity "amp"  = SOME ([CharFrag "&"])
+            | lookupEntity "lt"   = SOME ([CharFrag "<"])
+            | lookupEntity "gt"   = SOME ([CharFrag ">"])
+            | lookupEntity "apos" = SOME ([CharFrag "'"])
+            | lookupEntity "quot" = SOME ([CharFrag "\""])
             | lookupEntity name =
                 let
                   fun lookup [] = NONE
@@ -430,10 +432,20 @@ structure UXML = struct
                         normalize attvalues (encode (Word.fromInt charRef)::cs)
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
                         let
-                          val entityValue = case lookupEntity reference of
-                                                 NONE => "&" ^ reference ^ ";"
-                                               | SOME value =>
-                                                   normalizeWhiteSpace value
+                          val entityValue =
+                            case lookupEntity reference of
+                                 NONE => "&" ^ reference ^ ";"
+                               | SOME fragments =>
+                                   let
+                                     fun toString [] = ""
+                                       | toString (CharFrag charData::fragments) =
+                                           charData ^ toString fragments
+                                       | toString (EntityRef name::fragments) =
+                                           "&" ^ name ^ ";" ^ toString fragments
+                                     val value = toString fragments
+                                   in
+                                     normalizeWhiteSpace value
+                                   end
                         in
                           normalize attvalues (entityValue::cs)
                         end
@@ -562,8 +574,17 @@ structure UXML = struct
             | fromContent (Reference reference) =
                 (case entityResolver reference of
                      NONE => ""
-                   | SOME entityValue =>
-                       concat (map fromContent (#2 (parse Substring.getc (Substring.full entityValue)))))
+                   | SOME fragments =>
+                       let
+                         fun toString [] = ""
+                           | toString (CharFrag charData::fragments) =
+                               charData ^ toString fragments
+                           | toString (EntityRef name::fragments) =
+                               "&" ^ name ^ ";" ^ toString fragments
+                         val entityValue = toString fragments
+                       in
+                         concat (map fromContent (#2 (parse Substring.getc (Substring.full entityValue))))
+                       end)
             | fromContent (Comment comment) = ""
             | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
         in
