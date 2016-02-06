@@ -441,7 +441,10 @@ structure UXML = struct
                                        | toString (CharFrag charData::fragments) =
                                            charData ^ toString fragments
                                        | toString (EntityRef name::fragments) =
-                                           "&" ^ name ^ ";" ^ toString fragments
+                                           case lookupEntity name of
+                                                NONE => "&" ^ name ^ ";"
+                                              | SOME fragments' =>
+                                                  toString fragments' ^ toString fragments
                                      val value = toString fragments
                                    in
                                      normalizeWhiteSpace value
