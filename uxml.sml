@@ -44,9 +44,9 @@ structure UXML = struct
         ", name = " ^ name ^
         ", attvalue = \"" ^ String.toString attvalue ^
         "\"}"
-  and showNsdecl {nsprefix, uri} =
+    | showAttribute (NSDecl {nsprefix, uri}) =
         "{nsprefix = " ^ nsprefix ^
-        ", uri = \"" ^ String.toString uri ^
+        ", uri = " ^ uri ^
         "\"}"
   and showContent (CharData charData) =
         "(CharData \"" ^ String.toString charData ^ "\")"
@@ -56,6 +56,8 @@ structure UXML = struct
         ", attributes = [" ^ String.concatWith ", " (map showAttribute attributes) ^
         "], contents = [" ^ String.concatWith "," (map showContent contents) ^
         "]})"
+    | showContent (Reference name) =
+        "(Reference " ^ name ^ ")"
     | showContent (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
     | showContent (PI pi) = "(PI " ^ showPi pi ^ ")"
 
