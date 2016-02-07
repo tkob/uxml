@@ -78,7 +78,6 @@ Comment.      Comment ::= LXMLCOMMENT XMLCHARS RXMLCOMMENT ;
 EmptyPI. PI ::= LPI RPI ;
 PI.      PI ::= LPI [Chars] RPI ;
 
-
 -- [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
 Doctypedecl1. Doctypedecl ::= LDOCTYPE XMLNAME RTAG ;
 Doctypedecl2. Doctypedecl ::= LDOCTYPE XMLNAME ExternalID RTAG ;
