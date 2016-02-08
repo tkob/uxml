@@ -1,6 +1,7 @@
 MLULEX = ml-ulex
+TESTS = t/xmltest.t t/ibm.t t/sun.t t/oasis-pass.t t/japanese.t
 
-check: parse.sml scan.ulex.sml uxml.sml xmlconf t/xmltest.t t/ibm.t t/sun.t t/oasis-pass.t t/japanese.t
+check: parse.sml scan.ulex.sml uxml.sml xmlconf $(TESTS)
 	prove -f --exec ./t/do-test
 
 xmlconf: xmlts20130923.tar.gz
@@ -10,20 +11,8 @@ xmlconf: xmlts20130923.tar.gz
 xmlts20130923.tar.gz:
 	wget http://www.w3.org/XML/Test/xmlts20130923.tar.gz
 
-t/xmltest.t: t/xmltest.t.in
-	autom4te -l m4sugar -o t/xmltest.t t/xmltest.t.in
-
-t/ibm.t: t/ibm.t.in
-	autom4te -l m4sugar -o t/ibm.t t/ibm.t.in
-
-t/sun.t: t/sun.t.in
-	autom4te -l m4sugar -o t/sun.t t/sun.t.in
-
-t/oasis-pass.t: t/oasis-pass.t.in
-	autom4te -l m4sugar -o t/oasis-pass.t t/oasis-pass.t.in
-
-t/japanese.t: t/japanese.t.in
-	autom4te -l m4sugar -o t/japanese.t t/japanese.t.in
+%.t: %.t.in
+	autom4te -l m4sugar -o $@ $<
 
 main: parse.sml scan.ulex.sml uxml.sml main.sml main.mlb
 	mlton main.mlb
@@ -35,6 +24,6 @@ scan.ulex.sml: scan.ulex
 	$(MLULEX) --strict-sml scan.ulex
 
 clean:
-	rm -f main parse.sml scan.ulex.sml t/xmltest.t t/ibm.t t/sun.t t/oasis-pass.t t/japanese.t
+	rm -f main parse.sml scan.ulex.sml $(TESTS)
 
 .PHONY: check clean
