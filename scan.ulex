@@ -10,9 +10,10 @@
             then (3, StringCvt.HEX)
             else (2, StringCvt.DEC)
           val digits = String.extract (r, digitStart, NONE)
-          val SOME word = StringCvt.scanString (Int.scan radix) digits
         in
-          XMLCHARREF word
+          case StringCvt.scanString (Int.scan radix) digits of
+               NONE => raise Fail ("StringCvt.scanString failed: " ^ digits)
+             | SOME word => XMLCHARREF word
         end
 
   fun xmlEntityRef r =
