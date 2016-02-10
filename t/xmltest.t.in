@@ -18,6 +18,7 @@ m4_bmatch(file,
 ], [xmlconf/xmltest/valid/sa/050.xml], [## file is skipped because of UTF-16
 ], [xmlconf/xmltest/valid/sa/051.xml], [## file is skipped because of UTF-16
 ], [xmlconf/xmltest/valid/sa/052.xml], [## file is skipped because of a unicode char >= $#x10000;
+], [xmlconf/xmltest/valid/sa/089.xml], [## file is skipped because of a unicode char >= $#x10000;
 ], [[##] file
 
     - parse "file";

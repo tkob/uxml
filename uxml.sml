@@ -518,8 +518,27 @@ structure UXML = struct
           fun trim [] = []
             | trim (CharData _::contents) = trim contents
             | trim (content::contents) = content::trim contents
+          fun resolveEntity (Element {nsprefix, name, attributes, contents}) =
+                [Element { nsprefix = nsprefix,
+                           name = name,
+                           attributes = attributes,
+                           contents = List.concat (map resolveEntity contents) }]
+            | resolveEntity (Reference reference) = (
+                case entityResolver reference of
+                     NONE => []
+                   | SOME fragments =>
+                       let
+                         fun toString [] = ""
+                           | toString (CharFrag charData::fragments) =
+                               charData ^ toString fragments
+                           | toString (EntityRef name::fragments) =
+                               "&" ^ name ^ ";" ^ toString fragments
+                       in
+                         List.concat (map resolveEntity (#2 (parse Substring.getc (Substring.full (toString fragments)))))
+                       end)
+            | resolveEntity content = [content]
         in
-          (entityResolver, trim contents)
+          (entityResolver, List.concat (map resolveEntity (trim contents)))
         end
 
   fun parseFile fileName =
@@ -576,20 +595,7 @@ structure UXML = struct
                   ^ concat (map fromContent contents)
                   ^ "</" ^ name ^ ">"
                 end
-            | fromContent (Reference reference) =
-                (case entityResolver reference of
-                     NONE => ""
-                   | SOME fragments =>
-                       let
-                         fun toString [] = ""
-                           | toString (CharFrag charData::fragments) =
-                               charData ^ toString fragments
-                           | toString (EntityRef name::fragments) =
-                               "&" ^ name ^ ";" ^ toString fragments
-                         val entityValue = toString fragments
-                       in
-                         concat (map fromContent (#2 (parse Substring.getc (Substring.full entityValue))))
-                       end)
+            | fromContent (Reference reference) = ""
             | fromContent (Comment comment) = ""
             | fromContent (PI {target, content}) = "<?" ^ target ^ " " ^ content ^ "?>"
         in
