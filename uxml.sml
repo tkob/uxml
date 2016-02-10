@@ -395,7 +395,7 @@ structure UXML = struct
           and fromETag (Parse.Ast.ETag (span, name)) = splitName name
           and fromAttribute elemName (Parse.Ast.Attribute (span, attName, attvalues)) =
                 let
-                  val atttype= lookupAtttype (elemName, attName)
+                  val atttype = lookupAtttype (elemName, attName)
                   val attvalue = normalizeAttValue atttype attvalues
                 in
                   case splitName attName of
