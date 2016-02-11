@@ -35,10 +35,6 @@ structure UXML = struct
 
   fun showDocument contents =
         "[" ^ String.concatWith "," (map showContent contents ) ^ "]"
-  and showPi {target, content} =
-        "{target = " ^ target ^
-        ", content = \"" ^ String.toString content ^
-        "\"}"
   and showAttribute (Attr {nsprefix, name, attvalue}) =
         "{nsprefix = " ^ Option.getOpt (nsprefix, "NONE") ^
         ", name = " ^ name ^
@@ -59,7 +55,11 @@ structure UXML = struct
     | showContent (Reference name) =
         "(Reference " ^ name ^ ")"
     | showContent (Comment comment) = "(Comment \"" ^ String.toString comment ^ "\")"
-    | showContent (PI pi) = "(PI " ^ showPi pi ^ ")"
+    | showContent (PI {target, content}) =
+        "(PI " ^
+        "{target = " ^ target ^
+        ", content = \"" ^ String.toString content ^
+        "\"})"
 
   fun splitName name =
         let
