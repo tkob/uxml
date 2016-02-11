@@ -399,7 +399,10 @@ structure UXML = struct
                   val attvalue = normalizeAttValue atttype attvalues
                 in
                   case splitName attName of
-                       (NONE, name) =>
+                       (NONE, "xmlns") =>
+                         NSDecl { nsprefix = "",
+                                  uri = attvalue }
+                     | (NONE, name) =>
                          Attr { nsprefix = NONE,
                                 name = name,
                                 attvalue = attvalue }
@@ -575,8 +578,8 @@ structure UXML = struct
           fun makeAttrName (Attr {nsprefix = NONE, name, ...}) = name
             | makeAttrName (Attr {nsprefix = SOME nsprefix, name, ...}) =
                 nsprefix ^ ":" ^ name
-            | makeAttrName (NSDecl {nsprefix, ...}) =
-                "xmlns:" ^ nsprefix
+            | makeAttrName (NSDecl {nsprefix = "", ...}) = "xmlns"
+            | makeAttrName (NSDecl {nsprefix, ...}) = "xmlns:" ^ nsprefix
 
           and fromAttribute (attr as Attr {nsprefix, name, attvalue}) =
                 makeAttrName attr ^ "=\"" ^ escape attvalue ^ "\""
