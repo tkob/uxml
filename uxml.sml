@@ -604,4 +604,119 @@ structure UXML = struct
         in
           concat (map fromContent contents)
         end
+
+  structure Path :> sig
+    type node
+
+    val |> : 'a * ('a -> 'b) -> 'b
+
+    val fromDocument : document -> node list
+    val get : node list -> content list
+
+    val child : string -> node list -> node list
+    val childNS : (string * string) -> node list -> node list
+
+    val attr : string -> node list -> string list
+    val attrNS : (string * string) -> node list -> string list
+
+    val getAttr : string -> node -> string option
+    val getAttrNS : (string * string) -> node -> string option
+  end= struct
+    datatype node = Root of content list
+                  | Node of content * node
+
+    infix |>
+    fun a |> b = b a
+
+    fun fromDocument contents = [Root contents]
+
+    fun get nodes =
+          let
+            fun get' (Root contents) = raise Fail "Root"
+              | get' (Node (content, node)) = content
+          in
+            map get' nodes
+          end
+
+    fun resolveNS (nsprefix', Node (Element {attributes, ...}, node)) =
+          let
+            fun lookup [] = resolveNS (nsprefix', node)
+              | lookup (Attr _::attributes) = lookup attributes
+              | lookup (NSDecl {nsprefix, uri}::attributes) =
+                  if nsprefix = nsprefix' then uri
+                  else lookup attributes
+          in
+            lookup attributes
+          end
+      | resolveNS (nsprefix, Node (_, node)) = resolveNS (nsprefix, node)
+      | resolveNS (nsprefix, Root _) = ""
+
+    fun childNS (uri', name') nodes =
+          let
+            fun filter (parentNode, contents) =
+                  let
+                    fun f (elem as Element {nsprefix, name, ...}) =
+                          let
+                            val nsprefix = Option.getOpt (nsprefix, "")
+                            val node = Node (elem, parentNode)
+                            val uri = resolveNS (nsprefix, node)
+                          in
+                            if uri = uri' andalso name = name'
+                            then SOME node
+                            else NONE
+                          end
+                      | f _ = NONE
+                  in
+                    List.mapPartial f contents
+                  end
+            fun childNS' (node as Root contents) =
+                  filter (node, contents)
+              | childNS' (node as Node (Element {contents, ...}, _)) =
+                  filter (node, contents)
+              | childNS' (Node (_, _)) = [] (* only elements have children *)
+          in
+            List.concat (map childNS' nodes)
+          end
+
+    fun child name' nodes = childNS ("", name') nodes
+
+    fun getAttr name' (Node (Element {attributes, ...}, _)) =
+          let
+            fun find [] = NONE
+              | find (NSDecl _::attributes) = find attributes
+              | find (Attr {nsprefix = NONE, name, attvalue}::attributes) =
+                  if name = name' then SOME attvalue
+                  else find attributes
+              | find (Attr {nsprefix = SOME _, ...}::attributes) =
+                  find attributes
+          in
+            find attributes
+          end
+      | getAttr _ _ = NONE
+
+    fun getAttrNS (uri', name') (node as Node (Element {attributes, ...}, _)) =
+          let
+            fun find [] = NONE
+              | find (NSDecl _::attributes) = find attributes
+              | find (Attr {nsprefix = SOME nsprefix, name, attvalue}::attributes) =
+                  let
+                    val uri = resolveNS (nsprefix, node)
+                  in
+                    if uri = uri' andalso name = name'
+                    then SOME attvalue
+                    else find attributes
+                  end
+              | find (Attr {nsprefix = NONE, ...}::attributes) =
+                  find attributes
+          in
+            find attributes
+          end
+      | getAttrNS (_, _) _ = NONE
+
+    fun attr name' nodes =
+          List.mapPartial (getAttr name') nodes
+
+    fun attrNS (uri', name') nodes =
+          List.mapPartial (getAttrNS (uri', name')) nodes
+  end
 end
