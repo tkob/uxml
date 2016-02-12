@@ -541,7 +541,7 @@ structure UXML = struct
                        end)
             | resolveEntity content = [content]
         in
-          (entityResolver, List.concat (map resolveEntity (trim contents)))
+          List.concat (map resolveEntity (trim contents))
         end
 
   fun parseFile fileName =
@@ -558,7 +558,7 @@ structure UXML = struct
         end
 
   (* toCanon converts a document into James Clark's Canonical XML *)
-  fun toCanon (entityResolver, contents) =
+  fun toCanon contents =
         let
           fun escapeChar #"&" = "&amp;"
             | escapeChar #"<" = "&lt;"
