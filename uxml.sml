@@ -557,6 +557,9 @@ structure UXML = struct
           handle e => (TextIO.closeIn ins; raise e)
         end
 
+  fun parseString s = parseDocument Substring.getc (Substring.full s)
+  fun parseBytes bytes = parseString (Byte.bytesToString bytes)
+
   (* toCanon converts a document into James Clark's Canonical XML *)
   fun toCanon contents =
         let
