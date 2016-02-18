@@ -622,8 +622,11 @@ structure UXML = struct
     val attr : string -> node list -> string list
     val attrNS : (string * string) -> node list -> string list
 
+    val text : node list -> string list
+
     val getAttr : string -> node -> string option
     val getAttrNS : (string * string) -> node -> string option
+    val getText : node -> string list
   end= struct
     datatype node = Root of content list
                   | Node of content * node
@@ -721,5 +724,18 @@ structure UXML = struct
 
     fun attrNS (uri', name') nodes =
           List.mapPartial (getAttrNS (uri', name')) nodes
+
+    fun getText (Root _) = []
+      | getText (Node (Element {contents, ...}, _)) =
+          let
+            fun f (CharData charData) = SOME charData
+              | f _ = NONE
+          in
+            List.mapPartial f contents
+          end
+      | getText (Node _) = []
+
+    fun text nodes = List.concat (map getText nodes)
+
   end
 end
