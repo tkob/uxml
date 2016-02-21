@@ -624,6 +624,8 @@ structure UXML = struct
 
     val text : node list -> string list
 
+    val getChild : string -> node -> node list
+    val getChildNS : (string * string) -> node -> node list
     val getAttr : string -> node -> string option
     val getAttrNS : (string * string) -> node -> string option
     val getText : node -> string list
@@ -657,7 +659,7 @@ structure UXML = struct
       | resolveNS (nsprefix, Node (_, node)) = resolveNS (nsprefix, node)
       | resolveNS (nsprefix, Root _) = ""
 
-    fun childNS (uri', name') nodes =
+    fun getChildNS (uri', name') node =
           let
             fun filter (parentNode, contents) =
                   let
@@ -681,8 +683,13 @@ structure UXML = struct
                   filter (node, contents)
               | childNS' (Node (_, _)) = [] (* only elements have children *)
           in
-            List.concat (map childNS' nodes)
+            childNS' node
           end
+
+    fun getChild name' node = getChildNS ("", name') node
+
+    fun childNS (uri', name') nodes =
+          List.concat (map (getChildNS (uri', name')) nodes)
 
     fun child name' nodes = childNS ("", name') nodes
 
