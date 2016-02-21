@@ -31,12 +31,12 @@ test suite as a non-validating XML processor.
 
 ## Comparison with other XML parser written in SML
 
-| - | UXML | fxp | XML from smlnj-lib |
-| - | - | - | - |
-| validation against DTD | No | Yes | No |
-| DTD recognition | Yes | Yes | No |
-| namespace | Yes | No | No |
-| XPath-like navigation API | Yes | No | No |
+|                           | UXML | fxp | XML from smlnj-lib |
+|---------------------------|------|-----|--------------------|
+| validation against DTD    | No   | Yes | No                 |
+| DTD recognition           | Yes  | Yes | No                 |
+| namespace                 | Yes  | No  | No                 |
+| XPath-like navigation API | Yes  | No  | No                 |
 
 ## Build Requirements
 
