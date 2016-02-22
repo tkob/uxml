@@ -22,9 +22,9 @@ structure UXML = struct
                                   name       : name,
                                   attributes : attribute list,
                                   contents   : content list }
-                   | Reference of string
+                   | Reference of name
                    | Comment of string
-                   | PI of { target  : string,
+                   | PI of { target  : name,
                              content : string }
        and attribute = Attr of { nsprefix : name option,
                                  name     : name,
