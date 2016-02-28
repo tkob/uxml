@@ -3,11 +3,11 @@ Group
   structure UXML
   structure UXMLLexer
   structure Token
-  structure XMLWF
 is
   $/basis.cm
   $/smlnj-lib.cm
   $/ml-lpt-lib.cm
 
-  uxml.cm
-  xmlwf.sml
+  parse.sml
+  scan.ulex.sml
+  uxml.sml
