@@ -1,0 +1,5 @@
+provides: uxml v0.1.0
+remote: git git://github.com/tkob/uxml.git
+description: XML parser for Standard ML
+bug-url: https://github.com/tkob/uxml/issues
+license: MIT License
