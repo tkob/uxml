@@ -28,6 +28,9 @@
 
   fun drop n s = String.extract(s, n, NONE)
   fun trimQuot s = String.extract (s, 1, SOME (size s - 2))
+
+  fun fail (yytext, yylineno, yycolno, state) =
+        raise Fail (Int.toString (!yylineno) ^ "." ^ Int.toString (!yycolno) ^ " unexpected `" ^ yytext ^ "', state=" ^ state)
 );
 
 %name UXMLLexer;
@@ -103,6 +106,8 @@ SYSTEMID_PUBID
 <INITIAL>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
 <INITIAL>"<?" {piTarget} => (YYBEGIN PI; LPI(drop 2 yytext));
 <INITIAL>"<!DOCTYPE"    => (YYBEGIN DOCTYPE; LDOCTYPE);
+<INITIAL>"<".           => (fail (yytext, yylineno, yycolno, "INITIAL"));
+<INITIAL>.              => (fail (yytext, yylineno, yycolno, "INITIAL"));
 
 <STAG>{xmlS} => (continue());
 <STAG>{xmlName} => (XMLNAME(yytext));
@@ -111,6 +116,8 @@ SYSTEMID_PUBID
 <STAG>"/>" => (YYBEGIN INITIAL; REMPTYTAG);
 <STAG>[\'] => (YYBEGIN ATT_APOS; continue());
 <STAG>[\"] => (YYBEGIN ATT_QUOT; continue());
+<STAG>"/". => (fail (yytext, yylineno, yycolno, "STAG"));
+<STAG>.    => (fail (yytext, yylineno, yycolno, "STAG"));
 
 (* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
 <ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
@@ -125,6 +132,7 @@ SYSTEMID_PUBID
 
 <ETAG>{xmlS} => (continue());
 <ETAG>">" => (YYBEGIN INITIAL; RTAG);
+<ETAG>.   => (fail (yytext, yylineno, yycolno, "ETAG"));
 
 (* [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->' *)
 <XML_COMMENT>"-->" => (YYBEGIN INITIAL; RXMLCOMMENT);
