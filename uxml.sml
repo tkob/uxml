@@ -33,6 +33,8 @@ structure UXML = struct
                                    uri      : uri }
   type document = content list
 
+  exception UXML of string * UXMLLexer.span
+
   fun showDocument contents =
         "[" ^ String.concatWith "," (map showContent contents ) ^ "]"
   and showAttribute (Attr {nsprefix, name, attvalue}) =
@@ -364,12 +366,13 @@ structure UXML = struct
                   val (nsprefix, name, attributes) = fromSTag sTag
                   val contents = List.concat (map fromContent contents)
                   val (nsprefix', name') = fromETag eTag
-                  (* TODO: WFC: Element Type Match *)
                 in
-                  Element { nsprefix = nsprefix,
-                            name = name,
-                            attributes = attributes,
-                            contents = contents }
+                  if nsprefix = nsprefix' andalso name = name' then
+                    Element { nsprefix = nsprefix,
+                              name = name,
+                              attributes = attributes,
+                              contents = contents }
+                  else raise UXML ("WFC: Element Type Match", span)
                 end
           and fromEmptyElemTag (Parse.Ast.EmptyElemTag (span, name, attributes)) =
                 let
