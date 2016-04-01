@@ -1,5 +1,5 @@
 MLULEX = ml-ulex
-TESTS = t/xmltest.t t/ibm.t t/sun.t t/oasis-pass.t t/japanese.t
+TESTS = t/xmltest.t t/ibm.t t/sun.t t/oasis-pass.t t/japanese.t t/not-wf.t
 
 check: parse.sml scan.ulex.sml uxml.sml xmlconf $(TESTS)
 	prove -f --exec ./t/do-test

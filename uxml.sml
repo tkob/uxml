@@ -351,6 +351,20 @@ structure UXML = struct
                 in
                   List.foldl merge attributes defaults
                 end
+          fun uniqueAttSpec attributes =
+                let
+                  fun getName (NSDecl {nsprefix = "", ...}) = "xmlns"
+                    | getName (NSDecl {nsprefix, ...}) = "xmlns:" ^ nsprefix
+                    | getName (Attr {nsprefix = NONE, name, ...}) = name
+                    | getName (Attr {nsprefix = SOME nsprefix, name, ...}) = nsprefix ^ ":" ^ name
+                  val attNames = map getName attributes
+                  fun mem (x, []) = false
+                    | mem (x, y::ys) = x = y orelse mem (x, ys)
+                  fun uniq [] = true
+                    | uniq (x::xs) = not (mem (x, xs)) andalso uniq xs
+                in
+                  uniq attNames
+                end
           fun fromDocument (Parse.Ast.Document (span, contents)) =
                 List.concat (map fromContent contents)
           and fromComment (Parse.Ast.EmptyComment (span)) = Comment ""
@@ -380,6 +394,8 @@ structure UXML = struct
                   val defaults = defaultAttValues name
                   val attributes = mergeDefaultAttValues defaults attributes
                   val attributes = map (fromAttribute name) attributes
+                  val () = if uniqueAttSpec attributes then ()
+                           else raise UXML ("WFC: Unique Att Spec", span)
                 in
                   Element { nsprefix = nsprefix,
                             name = name,
@@ -392,6 +408,8 @@ structure UXML = struct
                   val defaults = defaultAttValues name
                   val attributes = mergeDefaultAttValues defaults attributes
                   val attributes = map (fromAttribute name) attributes
+                  val () = if uniqueAttSpec attributes then ()
+                           else raise UXML ("WFC: Unique Att Spec", span)
                 in
                   (nsprefix, name, attributes)
                 end
