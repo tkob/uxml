@@ -11,6 +11,15 @@ val parse = fn : string -> bool
 
 # Not well-formed XML documents
 
+## Element Type Match
+
+```
+- parse "<r></r2>";
+
+uncaught exception UXML
+...
+```
+
 ## Unique Att Spec
 
 ```
