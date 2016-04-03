@@ -197,18 +197,19 @@ structure UXML = struct
   fun parseRaw input1 instream =
         let
           val strm = UXMLLexer.streamifyReader input1 instream
+          val startPos = UXMLLexer.getPos strm
           val sourcemap = AntlrStreamPos.mkSourcemap ()
           val parses = Parse.parse sourcemap strm
         in
-          parses
+          case parses of
+               [] => raise UXML ("no parses", (startPos, startPos))
+             | [parse] => parse
+             | _ => raise UXML ("multiple parses", (startPos, startPos))
         end
 
   fun parse input1 instream =
         let
-          val rawParse = case parseRaw input1 instream of
-                              [] => raise Fail "no parses"
-                            | [parse] => parse
-                            | _ => raise Fail "multiple parses"
+          val rawParse = parseRaw input1 instream
           val intsubsets =
                 let
                   val Parse.Ast.Document (_, contents) = rawParse
