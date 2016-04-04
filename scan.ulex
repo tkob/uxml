@@ -3,7 +3,9 @@
   type lex_result = Token.token
   val eof = fn () => EOF
   
-  fun xmlCharRef r =
+  exception UXMLLexer of string
+
+  fun xmlCharRef (r, yylineno, yycolno, state) =
         let
           val (digitStart, radix) =
             if String.isPrefix "&#x" r
@@ -12,7 +14,7 @@
           val digits = String.extract (r, digitStart, NONE)
         in
           case StringCvt.scanString (Int.scan radix) digits of
-               NONE => raise Fail ("StringCvt.scanString failed: " ^ digits)
+               NONE => raise UXMLLexer (Int.toString (!yylineno) ^ "." ^ Int.toString (!yycolno) ^ "StringCvt.scanString failed: " ^ digits ^ ", state=" ^ state)
              | SOME word => XMLCHARREF word
         end
 
@@ -100,7 +102,7 @@ SYSTEMID_PUBID
 <INITIAL>{xmlCharData}  => (XMLCHARS(yytext));
 <INITIAL>"<" {xmlName}  => (YYBEGIN STAG; LSTAG(drop 1 yytext));
 <INITIAL>"</" {xmlName} => (YYBEGIN ETAG; LETAG(drop 2 yytext));
-<INITIAL>{xmlCharRef}   => (xmlCharRef yytext);
+<INITIAL>{xmlCharRef}   => (xmlCharRef (yytext, yylineno, yycolno, "INITIAL"));
 <INITIAL>{xmlEntityRef} => (xmlEntityRef yytext);
 <INITIAL>"<![CDATA["    => (YYBEGIN CDATA; continue());
 <INITIAL>"<!--"         => (YYBEGIN XML_COMMENT; LXMLCOMMENT);
@@ -121,12 +123,12 @@ SYSTEMID_PUBID
 
 (* [10] AttValue ::= '"' ([^<&"] | Reference)* '"' *)
 <ATT_QUOT>[^<&"]+ => (XMLCHARS(yytext));
-<ATT_QUOT>{xmlCharRef} => (xmlCharRef yytext);
+<ATT_QUOT>{xmlCharRef} => (xmlCharRef (yytext, yylineno, yycolno, "ATT_QUOT"));
 <ATT_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_QUOT>[\"] => (YYBEGIN STAG; continue());
 (*                 | "'" ([^<&'] | Reference)* "'" *)
 <ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
-<ATT_APOS>{xmlCharRef} => (xmlCharRef yytext);
+<ATT_APOS>{xmlCharRef} => (xmlCharRef (yytext, yylineno, yycolno, "ATT_APOS"));
 <ATT_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_APOS>[\'] => (YYBEGIN STAG; continue());
 
@@ -205,12 +207,12 @@ SYSTEMID_PUBID
 <ATTLIST_DECL>[\"] => (YYBEGIN ATTLIST_QUOT; continue());
 
 <ATTLIST_QUOT>[^<&"]+ => (XMLCHARS(yytext));
-<ATTLIST_QUOT>{xmlCharRef} => (xmlCharRef yytext);
+<ATTLIST_QUOT>{xmlCharRef} => (xmlCharRef (yytext, yylineno, yycolno, "ATTLIST_QUOT"));
 <ATTLIST_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATTLIST_QUOT>[\"] => (YYBEGIN ATTLIST_DECL; continue());
 
 <ATTLIST_APOS>[^<&']+ => (XMLCHARS(yytext));
-<ATTLIST_APOS>{xmlCharRef} => (xmlCharRef yytext);
+<ATTLIST_APOS>{xmlCharRef} => (xmlCharRef (yytext, yylineno, yycolno, "ATTLIST_APOS"));
 <ATTLIST_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATTLIST_APOS>[\'] => (YYBEGIN ATTLIST_DECL; continue());
 
@@ -225,13 +227,13 @@ SYSTEMID_PUBID
 
 <ENTITY_VALUE_QUOT>[^%&"]+ => (XMLCHARS(yytext));
 <ENTITY_VALUE_QUOT>{xmlPEReference} => (xmlPERef yytext);
-<ENTITY_VALUE_QUOT>{xmlCharRef} => (xmlCharRef yytext);
+<ENTITY_VALUE_QUOT>{xmlCharRef} => (xmlCharRef (yytext, yylineno, yycolno, "ENTITY_VALUE_QUOT"));
 <ENTITY_VALUE_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ENTITY_VALUE_QUOT>[\"] => (YYBEGIN ENTITY_DECL; continue());
 
 <ENTITY_VALUE_APOS>[^%&']+ => (XMLCHARS(yytext));
 <ENTITY_VALUE_APOS>{xmlPEReference} => (xmlPERef yytext);
-<ENTITY_VALUE_APOS>{xmlCharRef} => (xmlCharRef yytext);
+<ENTITY_VALUE_APOS>{xmlCharRef} => (xmlCharRef (yytext, yylineno, yycolno, "ENTITY_VALUE_APOS"));
 <ENTITY_VALUE_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ENTITY_VALUE_APOS>[\'] => (YYBEGIN ENTITY_DECL; continue());
 
