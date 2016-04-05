@@ -32,7 +32,7 @@
   fun trimQuot s = String.extract (s, 1, SOME (size s - 2))
 
   fun fail (yytext, yylineno, yycolno, state) =
-        raise Fail (Int.toString (!yylineno) ^ "." ^ Int.toString (!yycolno) ^ " unexpected `" ^ yytext ^ "', state=" ^ state)
+        raise UXMLLexer (Int.toString (!yylineno) ^ "." ^ Int.toString (!yycolno) ^ " unexpected `" ^ yytext ^ "', state=" ^ state)
 );
 
 %name UXMLLexer;
