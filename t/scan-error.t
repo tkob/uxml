@@ -4,7 +4,7 @@
 - CM.make "test.cm";
 ...
 val it = true : bool
-- fun parse s = (UXML.parseDocument Substring.getc (Substring.full s); "no exn") handle (UXMLLexer.UserDeclarations.UXMLLexer (msg, pos)) => msg;
+- fun parse s = (UXML.parseDocument Substring.getc (Substring.full s); "no exn") handle UXML.UXML (msg, span) => msg;
 ...
 val parse = fn : string -> string
 ```

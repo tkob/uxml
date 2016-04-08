@@ -200,6 +200,8 @@ structure UXML = struct
           val startPos = UXMLLexer.getPos strm
           val sourcemap = AntlrStreamPos.mkSourcemap ()
           val parses = Parse.parse sourcemap strm
+                handle UXMLLexer.UserDeclarations.UXMLLexer (msg, pos) =>
+                  raise UXML (msg, (pos, pos))
         in
           case parses of
                [] => raise UXML ("no parses", (startPos, startPos))
