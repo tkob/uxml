@@ -12,12 +12,11 @@ structure Main = struct
            val sourcemap = case fileName of
                                 NONE => AntlrStreamPos.mkSourcemap ()
                               | SOME n => AntlrStreamPos.mkSourcemap' n
-           val parses =
-                 UXML.parseRaw TextIO.StreamIO.input1 (TextIO.getInstream ins)
-           val numParses = length parses
+           val (_, doc) =
+                 UXML.parse TextIO.StreamIO.input1 (TextIO.getInstream ins)
            fun println s = print (s ^ "\n")
          in
-           print (Int.toString numParses ^ " parse(s)\n");
+           println (UXML.showDocument doc);
            release ();
            OS.Process.success
          end
