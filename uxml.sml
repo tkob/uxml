@@ -209,6 +209,16 @@ structure UXML = struct
              | _ => raise UXML ("multiple parses", (startPos, startPos))
         end
 
+  fun splitList f l =
+        let
+          fun split [] left = (rev left, [])
+            | split (x::xs) left =
+                if f x then (rev left, x::xs)
+                else split xs (x::left)
+        in
+          split l []
+        end
+
   fun parse input1 instream =
         let
           val rawParse = parseRaw input1 instream
