@@ -11,6 +11,17 @@ val parse = fn : string -> bool
 
 # Not well-formed XML documents
 
+## No Document Element
+
+This is not an explicit WFC in the spec, but a syntactic rule [1].
+
+```
+- parse "hello";
+
+uncaught exception UXML
+...
+```
+
 ## Element Type Match
 
 ```

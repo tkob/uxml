@@ -574,8 +574,17 @@ structure UXML = struct
                          List.concat (map resolveEntity (#2 (parse Substring.getc (Substring.full (toString fragments)))))
                        end)
             | resolveEntity content = [content]
+          val contents = List.concat (map resolveEntity (trim contents))
+
+          (* additional checking for well-formedness *)
+          fun isElement (Element _) = true
+            | isElement _ = false
+          val (prolog, elemMisc) = splitList isElement contents
+          val (elem, misc) = case elemMisc of
+                                  [] => raise UXML ("no doc element", (0, 0))
+                                | elem::misc => (elem, misc)
         in
-          List.concat (map resolveEntity (trim contents))
+          contents
         end
 
   fun parseFile fileName =
