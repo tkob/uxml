@@ -583,6 +583,8 @@ structure UXML = struct
           val (elem, misc) = case elemMisc of
                                   [] => raise UXML ("no doc element", (0, 0))
                                 | elem::misc => (elem, misc)
+          val false = List.exists isElement misc
+                      andalso raise UXML ("multiple doc elements", (0, 0))
         in
           contents
         end
