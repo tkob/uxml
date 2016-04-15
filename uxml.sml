@@ -226,9 +226,19 @@ structure UXML = struct
                 let
                   val Parse.Ast.Document (_, contents) = rawParse
                   fun getDoctypedecl [] = NONE
-                    | getDoctypedecl (Parse.Ast.DoctypeContent (_, doctypedecl)::_) =
-                        SOME doctypedecl
-                    | getDoctypedecl (_::misc) = getDoctypedecl misc
+                    | getDoctypedecl (Parse.Ast.DoctypeContent (_, doctypedecl)::contents) =
+                        (* assert that there is only one doctype decl *)
+                        (case getDoctypedecl contents of
+                              NONE => SOME doctypedecl
+                            | SOME (Parse.Ast.Doctypedecl1 (span, _)) =>
+                                raise UXML ("multiple doctype decls", span)
+                            | SOME (Parse.Ast.Doctypedecl2 (span, _, _)) =>
+                                raise UXML ("multiple doctype decls", span)
+                            | SOME (Parse.Ast.Doctypedecl3 (span, _, intsubsets)) =>
+                                raise UXML ("multiple doctype decls", span)
+                            | SOME (Parse.Ast.Doctypedecl4 (span, _, _, intsubsets)) =>
+                                raise UXML ("multiple doctype decls", span))
+                    | getDoctypedecl (_::contents) = getDoctypedecl contents
                 in
                   case getDoctypedecl contents of
                        NONE => []

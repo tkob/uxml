@@ -29,6 +29,24 @@ uncaught exception UXML
 ...
 ```
 
+## At Most One Doctype Declaration
+
+This is not an explicit WFC in the spec, but a syntactic rule [1] and [22].
+
+```
+- parse "<!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]><!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]><doc></doc>";
+
+uncaught exception UXML
+...
+```
+
+```
+- parse "<!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]><doc></doc><!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]>";
+
+uncaught exception UXML
+...
+```
+
 ## Element Type Match
 
 ```
