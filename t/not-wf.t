@@ -40,6 +40,60 @@ val it = "multiple doctype decls" : string
 val it = "multiple doctype decls" : string
 ```
 
+## Attribute Chars
+
+This is not an explicit WFC in the spec, but a syntactic rule [10].
+
+```
+- parse "<r att=\"a<b\"/>";
+val it = "[1.10] [state=ATT_QUOT]: unexpected `<'" : string
+```
+
+```
+- parse "<r att=\"a&\"/>";
+val it = "[1.10] [state=ATT_QUOT]: unexpected `&'" : string
+```
+
+```
+- parse "<r att=\"a&#\"/>";
+val it = "[1.10] [state=ATT_QUOT]: unexpected `&#'" : string
+```
+
+```
+- parse "<r att=\"a&b\"/>";
+val it = "[1.10] [state=ATT_QUOT]: unexpected `&b'" : string
+```
+
+```
+- parse "<r att=\"a&#b\"/>";
+val it = "[1.10] [state=ATT_QUOT]: unexpected `&#b'" : string
+```
+
+```
+- parse "<r att='a<b'/>";
+val it = "[1.10] [state=ATT_APOS]: unexpected `<'" : string
+```
+
+```
+- parse "<r att='a&'/>";
+val it = "[1.10] [state=ATT_APOS]: unexpected `&'" : string
+```
+
+```
+- parse "<r att='a&#'/>";
+val it = "[1.10] [state=ATT_APOS]: unexpected `&#'" : string
+```
+
+```
+- parse "<r att='a&b'/>";
+val it = "[1.10] [state=ATT_APOS]: unexpected `&b'" : string
+```
+
+```
+- parse "<r att='a&#b'/>";
+val it = "[1.10] [state=ATT_APOS]: unexpected `&#b'" : string
+```
+
 ## Element Type Match
 
 ```

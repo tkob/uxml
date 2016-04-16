@@ -140,11 +140,15 @@ SYSTEMID_PUBID
 <ATT_QUOT>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ATT_QUOT"));
 <ATT_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_QUOT>[\"] => (YYBEGIN STAG; continue());
+<ATT_QUOT>"&" "#"? [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ATT_QUOT"));
+<ATT_QUOT>"<" => (fail yytext yypos (yylineno, yycolno, "ATT_QUOT"));
 (*                 | "'" ([^<&'] | Reference)* "'" *)
 <ATT_APOS>[^<&']+ => (XMLCHARS(yytext));
 <ATT_APOS>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ATT_APOS"));
 <ATT_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATT_APOS>[\'] => (YYBEGIN STAG; continue());
+<ATT_APOS>"&" "#"? [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ATT_APOS"));
+<ATT_APOS>"<" => (fail yytext yypos (yylineno, yycolno, "ATT_APOS"));
 
 <ETAG>{xmlS} => (continue());
 <ETAG>">" => (YYBEGIN INITIAL; RTAG);
@@ -224,11 +228,15 @@ SYSTEMID_PUBID
 <ATTLIST_QUOT>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ATTLIST_QUOT"));
 <ATTLIST_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATTLIST_QUOT>[\"] => (YYBEGIN ATTLIST_DECL; continue());
+<ATTLIST_QUOT>"&" "#"? [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ATTLISTQUOT"));
+<ATTLIST_QUOT>"<" => (fail yytext yypos (yylineno, yycolno, "ATTLISTQUOT"));
 
 <ATTLIST_APOS>[^<&']+ => (XMLCHARS(yytext));
 <ATTLIST_APOS>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ATTLIST_APOS"));
 <ATTLIST_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ATTLIST_APOS>[\'] => (YYBEGIN ATTLIST_DECL; continue());
+<ATTLIST_APOS>"&" "#"? [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ATTLIST_APOS"));
+<ATTLIST_APOS>"<" => (fail yytext yypos (yylineno, yycolno, "ATTLIST_APOS"));
 
 <ENTITY_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <ENTITY_DECL>{xmlS} => (continue());
