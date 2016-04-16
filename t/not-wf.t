@@ -4,9 +4,9 @@
 - CM.make "test.cm";
 ...
 val it = true : bool
-- fun parse s = (UXML.parseDocument Substring.getc (Substring.full s); true);
+- fun parse s = (UXML.parseDocument Substring.getc (Substring.full s); "well-formed") handle UXML.UXML (msg, _) => msg;
 ...
-val parse = fn : string -> bool
+val parse = fn : string -> string
 ```
 
 # Not well-formed XML documents
@@ -17,15 +17,12 @@ This is not an explicit WFC in the spec, but a syntactic rule [1].
 
 ```
 - parse "hello";
-
-uncaught exception UXML
-...
+val it = "no doc element" : string
 ```
 
 ```
 - parse "<r/><r/>";
-
-uncaught exception UXML
+val it = "multiple doc elements" : string
 ...
 ```
 
@@ -35,53 +32,39 @@ This is not an explicit WFC in the spec, but a syntactic rule [1] and [22].
 
 ```
 - parse "<!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]><!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]><doc></doc>";
-
-uncaught exception UXML
-...
+val it = "multiple doctype decls" : string
 ```
 
 ```
 - parse "<!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]><doc></doc><!DOCTYPE doc [<!ELEMENT doc (#PCDATA)>]>";
-
-uncaught exception UXML
-...
+val it = "multiple doctype decls" : string
 ```
 
 ## Element Type Match
 
 ```
 - parse "<r></r2>";
-
-uncaught exception UXML
-...
+val it = "WFC: Element Type Match" : string
 ```
 
 ## Unique Att Spec
 
 ```
 - parse "<r a='1' a='2'/>";
-
-uncaught exception UXML
-...
+val it = "WFC: Unique Att Spec" : string
 ```
 
 ```
 - parse "<r ns:a='1' ns:a='2'/>";
-
-uncaught exception UXML
-...
+val it = "WFC: Unique Att Spec" : string
 ```
 
 ```
 - parse "<r xmlns='1' xmlns='2'/>";
-
-uncaught exception UXML
-...
+val it = "WFC: Unique Att Spec" : string
 ```
 
 ```
 - parse "<r xmlns:a='1' xmlns:a='2'/>";
-
-uncaught exception UXML
-...
+val it = "WFC: Unique Att Spec" : string
 ```
