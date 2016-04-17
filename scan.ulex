@@ -158,6 +158,8 @@ SYSTEMID_PUBID
 <XML_COMMENT>"-->" => (YYBEGIN INITIAL; RXMLCOMMENT);
 <XML_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+
   => (XMLCHARS(yytext));
+<XML_COMMENT>"--" => (fail yytext yypos (yylineno, yycolno, "XML_COMMENT"));
+<XML_COMMENT>(. & ~{xmlChar}) => (fail yytext yypos (yylineno, yycolno, "XML_COMMENT"));
 
 (* [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char* )))? '?>' *)
 <PI>{xmlS}
@@ -276,6 +278,8 @@ SYSTEMID_PUBID
 
 <DOCTYPE_COMMENT>"-->" => (YYBEGIN DOCTYPE; continue());
 <DOCTYPE_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+ => (continue());
+<DOCTYPE_COMMENT>"--" => (fail yytext yypos (yylineno, yycolno, "DOCTYPE_COMMENT"));
+<DOCTYPE_COMMENT>(. & ~{xmlChar}) => (fail yytext yypos (yylineno, yycolno, "DOCTYPE_COMMENT"));
 
 <DOCTYPE_PI>{xmlS}
    (* White space immediately following the target name of a PI. *)

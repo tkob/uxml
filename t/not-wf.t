@@ -94,6 +94,30 @@ val it = "[1.10] [state=ATT_APOS]: unexpected `&b'" : string
 val it = "[1.10] [state=ATT_APOS]: unexpected `&#b'" : string
 ```
 
+## Comment Strings
+
+This is not an explicit WFC in the spec, but a syntactic rule [15].
+
+```
+- parse "<!-- comment ---><r/>";
+val it = "[1.14] [state=XML_COMMENT]: unexpected `--'" : string
+```
+
+```
+- parse "<!-- \001 --><r/>";
+val it = "[1.6] [state=XML_COMMENT]: unexpected `\^A'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!-- comment --->]><doc/>";
+val it = "[1.29] [state=DOCTYPE_COMMENT]: unexpected `--'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!-- \001 -->]><doc/>";
+val it = "[1.21] [state=DOCTYPE_COMMENT]: unexpected `\^A'" : string
+```
+
 ## Element Type Match
 
 ```
