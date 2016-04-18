@@ -118,6 +118,13 @@ val it = "[1.29] [state=DOCTYPE_COMMENT]: unexpected `--'" : string
 val it = "[1.21] [state=DOCTYPE_COMMENT]: unexpected `\^A'" : string
 ```
 
+## CDATA Chars
+
+```
+- parse "<r><![CDATA[ \001 ]]></r>";
+val it = "[1.14] [state=CDATA]: unexpected `\^A'" : string
+```
+
 ## Element Type Match
 
 ```
