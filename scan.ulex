@@ -166,9 +166,11 @@ SYSTEMID_PUBID
    (* White space immediately following the target name of a PI. *)
    => (YYBEGIN PI_CONTENT; continue());
 <PI>"?>" => (YYBEGIN INITIAL; RPI);
+<PI>(. & ~{xmlS} & ~"?") => (fail yytext yypos (yylineno, yycolno, "PI"));
 <PI_CONTENT>"?>" => (YYBEGIN INITIAL; RPI);
 <PI_CONTENT>({xmlChar} & ~"?")+ => (XMLCHARS(yytext));
 <PI_CONTENT>"?" => (XMLCHARS(yytext));
+<PI_CONTENT>(. & ~{xmlChar}) => (fail yytext yypos (yylineno, yycolno, "PI_CONTENT"));
 
 (* [20] CData ::= (Char* - (Char* ']]>' Char* )) *)
 <CDATA>"]]>" => (YYBEGIN INITIAL; XMLCDSECT (toString stringBuffer));
@@ -286,6 +288,8 @@ SYSTEMID_PUBID
    (* White space immediately following the target name of a PI. *)
    => (YYBEGIN DOCTYPE_PI_CONTENT; continue());
 <DOCTYPE_PI>"?>" => (YYBEGIN DOCTYPE; RPI);
+<DOCTYPE_PI>(. & ~{xmlS} & ~"?") => (fail yytext yypos (yylineno, yycolno, "DOCTYPE_PI"));
 <DOCTYPE_PI_CONTENT>"?>" => (YYBEGIN DOCTYPE; RPI);
 <DOCTYPE_PI_CONTENT>({xmlChar} & ~"?")+ => (XMLCHARS(yytext));
 <DOCTYPE_PI_CONTENT>"?" => (XMLCHARS(yytext));
+<DOCTYPE_PI_CONTENT>(. & ~{xmlChar}) => (fail yytext yypos (yylineno, yycolno, "DOCTYPE_PI_CONTENT"));

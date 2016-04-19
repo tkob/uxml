@@ -125,6 +125,28 @@ val it = "[1.21] [state=DOCTYPE_COMMENT]: unexpected `\^A'" : string
 val it = "[1.14] [state=CDATA]: unexpected `\^A'" : string
 ```
 
+## PI Chars
+
+```
+- parse "<?pi!?><r/>";
+val it = "[1.5] [state=PI]: unexpected `!'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<?pi!?>]><doc/>";
+val it = "[1.20] [state=DOCTYPE_PI]: unexpected `!'" : string
+```
+
+```
+- parse "<?pi \001?><r/>";
+val it = "[1.6] [state=PI_CONTENT]: unexpected `\^A'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<?pi \001?>]><doc/>";
+val it = "[1.21] [state=DOCTYPE_PI_CONTENT]: unexpected `\^A'" : string
+```
+
 ## Element Type Match
 
 ```
