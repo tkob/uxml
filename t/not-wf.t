@@ -147,6 +147,13 @@ val it = "[1.6] [state=PI_CONTENT]: unexpected `\^A'" : string
 val it = "[1.21] [state=DOCTYPE_PI_CONTENT]: unexpected `\^A'" : string
 ```
 
+# Doctype Chars
+
+```
+- parse "<!DOCTYPE doc [!]><doc/>";
+val it = "[1.16] [state=DOCTYPE]: unexpected `!'" : string
+```
+
 ## Element Type Match
 
 ```

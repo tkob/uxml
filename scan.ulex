@@ -194,6 +194,7 @@ SYSTEMID_PUBID
 <DOCTYPE>"<!--"       =>(YYBEGIN DOCTYPE_COMMENT; continue());
 <DOCTYPE>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
 <DOCTYPE>"'" ([^'])* "'" => (XMLCHARS(trimQuot yytext));
+<DOCTYPE>. => (fail yytext yypos (yylineno, yycolno, "DOCTYPE"));
 
 <ELEMENT_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <ELEMENT_DECL>{xmlS} => (continue());
