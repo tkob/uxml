@@ -154,6 +154,68 @@ val it = "[1.21] [state=DOCTYPE_PI_CONTENT]: unexpected `\^A'" : string
 val it = "[1.16] [state=DOCTYPE]: unexpected `!'" : string
 ```
 
+## Entity Value Chars
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e \"&\">]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_QUOT]: unexpected `&'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e \"&#\">]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_QUOT]: unexpected `&#'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e \"a&b\">]><doc/>";
+val it = "[1.29] [state=ENTITY_VALUE_QUOT]: unexpected `&b'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e \"a&#b\">]><doc/>";
+val it = "[1.29] [state=ENTITY_VALUE_QUOT]: unexpected `&#b'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e \"%\">]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_QUOT]: unexpected `%'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e \"%a\">]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_QUOT]: unexpected `%a'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e '&'>]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_APOS]: unexpected `&'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e '&#'>]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_APOS]: unexpected `&#'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e 'a&b'>]><doc/>";
+val it = "[1.29] [state=ENTITY_VALUE_APOS]: unexpected `&b'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e 'a&#b'>]><doc/>";
+val it = "[1.29] [state=ENTITY_VALUE_APOS]: unexpected `&#b'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e '%'>]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_APOS]: unexpected `%'" : string
+```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e '%a'>]><doc/>";
+val it = "[1.28] [state=ENTITY_VALUE_APOS]: unexpected `%a'" : string
+```
+
 ## Element Type Match
 
 ```

@@ -258,12 +258,16 @@ SYSTEMID_PUBID
 <ENTITY_VALUE_QUOT>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ENTITY_VALUE_QUOT"));
 <ENTITY_VALUE_QUOT>{xmlEntityRef} => (xmlEntityRef yytext);
 <ENTITY_VALUE_QUOT>[\"] => (YYBEGIN ENTITY_DECL; continue());
+<ENTITY_VALUE_QUOT>"&" "#"? [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ENTITY_VALUE_QUOT"));
+<ENTITY_VALUE_QUOT>"%" [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ENTITY_VALUE_QUOT"));
 
 <ENTITY_VALUE_APOS>[^%&']+ => (XMLCHARS(yytext));
 <ENTITY_VALUE_APOS>{xmlPEReference} => (xmlPERef yytext);
 <ENTITY_VALUE_APOS>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ENTITY_VALUE_APOS"));
 <ENTITY_VALUE_APOS>{xmlEntityRef} => (xmlEntityRef yytext);
 <ENTITY_VALUE_APOS>[\'] => (YYBEGIN ENTITY_DECL; continue());
+<ENTITY_VALUE_APOS>"&" "#"? [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ENTITY_VALUE_APOS"));
+<ENTITY_VALUE_APOS>"%" [0-9a-zA-Z]* => (fail yytext yypos (yylineno, yycolno, "ENTITY_VALUE_APOS"));
 
 <SYSTEMID_PUBID>">" => (YYBEGIN DOCTYPE; RTAG);
 <SYSTEMID_PUBID>{xmlS} => (continue());
