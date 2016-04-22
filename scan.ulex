@@ -275,6 +275,7 @@ SYSTEMID_PUBID
 <SYSTEMID_PUBID>{xmlName} => (XMLNAME(yytext));
 <SYSTEMID_PUBID>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
 <SYSTEMID_PUBID>"'" ([^'])* "'" => (XMLCHARS(trimQuot yytext));
+<SYSTEMID_PUBID>. => (fail yytext yypos (yylineno, yycolno, "SYSTEMID_PUBID"));
 
 <NOTATION_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <NOTATION_DECL>{xmlS} => (continue());

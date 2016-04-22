@@ -216,6 +216,13 @@ val it = "[1.28] [state=ENTITY_VALUE_APOS]: unexpected `%'" : string
 val it = "[1.28] [state=ENTITY_VALUE_APOS]: unexpected `%a'" : string
 ```
 
+## System ID Chars
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY ent SYSTEM !>]></doc/>";
+val it = "[1.36] [state=SYSTEMID_PUBID]: unexpected `!'" : string
+```
+
 ## Element Type Match
 
 ```
