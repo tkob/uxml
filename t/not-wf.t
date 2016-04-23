@@ -251,3 +251,10 @@ val it = "WFC: Unique Att Spec" : string
 - parse "<r xmlns:a='1' xmlns:a='2'/>";
 val it = "WFC: Unique Att Spec" : string
 ```
+
+## No Recursion
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e1 '&e2;'><!ENTITY e2 '&e3;'><!ENTITY e3 '&e1;'>]><doc>&e1;</doc>";
+val it = "WFC: No Recursion" : string
+```

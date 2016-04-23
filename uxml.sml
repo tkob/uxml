@@ -219,6 +219,9 @@ structure UXML = struct
           split l []
         end
 
+  fun mem (x, []) = false
+    | mem (x, y::ys) = x = y orelse mem (x, ys)
+
   fun parse input1 instream =
         let
           val rawParse = parseRaw input1 instream
@@ -381,8 +384,6 @@ structure UXML = struct
                     | getName (Attr {nsprefix = NONE, name, ...}) = name
                     | getName (Attr {nsprefix = SOME nsprefix, name, ...}) = nsprefix ^ ":" ^ name
                   val attNames = map getName attributes
-                  fun mem (x, []) = false
-                    | mem (x, y::ys) = x = y orelse mem (x, ys)
                   fun uniq [] = true
                     | uniq (x::xs) = not (mem (x, xs)) andalso uniq xs
                 in
@@ -565,26 +566,32 @@ structure UXML = struct
           fun trim [] = []
             | trim (CharData _::contents) = trim contents
             | trim (content::contents) = content::trim contents
-          fun resolveEntity (Element {nsprefix, name, attributes, contents}) =
+          fun resolveEntity refTrace (Element {nsprefix, name, attributes, contents}) =
                 [Element { nsprefix = nsprefix,
                            name = name,
                            attributes = attributes,
-                           contents = List.concat (map resolveEntity contents) }]
-            | resolveEntity (Reference reference) = (
-                case entityResolver reference of
-                     NONE => []
-                   | SOME fragments =>
-                       let
-                         fun toString [] = ""
-                           | toString (CharFrag charData::fragments) =
-                               charData ^ toString fragments
-                           | toString (EntityRef name::fragments) =
-                               "&" ^ name ^ ";" ^ toString fragments
-                       in
-                         List.concat (map resolveEntity (#2 (parse Substring.getc (Substring.full (toString fragments)))))
-                       end)
-            | resolveEntity content = [content]
-          val contents = List.concat (map resolveEntity (trim contents))
+                           contents = List.concat (map (resolveEntity refTrace) contents) }]
+            | resolveEntity refTrace (Reference reference) =
+                if mem (reference, refTrace) then
+                  raise UXML ("WFC: No Recursion", (0, 0))
+                else (
+                  case entityResolver reference of
+                       NONE => []
+                     | SOME fragments =>
+                         let
+                           fun toString [] = ""
+                             | toString (CharFrag charData::fragments) =
+                                 charData ^ toString fragments
+                             | toString (EntityRef name::fragments) =
+                                 "&" ^ name ^ ";" ^ toString fragments
+                         in
+                           List.concat
+                             (map
+                               (resolveEntity (reference::refTrace))
+                               (#2 (parse Substring.getc (Substring.full (toString fragments)))))
+                         end)
+            | resolveEntity refTrace content = [content]
+          val contents = List.concat (map (resolveEntity []) (trim contents))
 
           (* additional checking for well-formedness *)
           fun isElement (Element _) = true
