@@ -258,3 +258,8 @@ val it = "WFC: Unique Att Spec" : string
 - parse "<!DOCTYPE doc [<!ENTITY e1 '&e2;'><!ENTITY e2 '&e3;'><!ENTITY e3 '&e1;'>]><doc>&e1;</doc>";
 val it = "WFC: No Recursion" : string
 ```
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY e1 '&e2;'><!ENTITY e2 '&e3;'><!ENTITY e3 '&e1;'>]><doc a='&e1;'></doc>";
+val it = "WFC: No Recursion" : string
+```

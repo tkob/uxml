@@ -222,7 +222,7 @@ structure UXML = struct
   fun mem (x, []) = false
     | mem (x, y::ys) = x = y orelse mem (x, ys)
 
-  fun parse input1 instream =
+  fun parse refTrace input1 instream =
         let
           val rawParse = parseRaw input1 instream
           val intsubsets =
@@ -285,19 +285,21 @@ structure UXML = struct
                 in
                   makeSymbolTable intsubsets []
                 end
-          fun lookupEntity "amp"  = SOME ([CharFrag "&"])
-            | lookupEntity "lt"   = SOME ([CharFrag "<"])
-            | lookupEntity "gt"   = SOME ([CharFrag ">"])
-            | lookupEntity "apos" = SOME ([CharFrag "'"])
-            | lookupEntity "quot" = SOME ([CharFrag "\""])
-            | lookupEntity name =
+          fun lookupEntity _ "amp"  = SOME ([CharFrag "&"])
+            | lookupEntity _ "lt"   = SOME ([CharFrag "<"])
+            | lookupEntity _ "gt"   = SOME ([CharFrag ">"])
+            | lookupEntity _ "apos" = SOME ([CharFrag "'"])
+            | lookupEntity _ "quot" = SOME ([CharFrag "\""])
+            | lookupEntity refTrace name =
                 let
                   fun lookup [] = NONE
                     | lookup ((name', value)::symbolTable) =
                         if name = name' then SOME value
                         else lookup symbolTable
                 in
-                  lookup symbolTable
+                  if mem (name, refTrace)
+                  then raise UXML ("WFC: No Recursion", (0, 0))
+                  else lookup symbolTable
                 end
           fun lookupAtttype (elemName, attName) =
                 let
@@ -483,7 +485,7 @@ structure UXML = struct
                     | normalize (Parse.Ast.ReferenceAttValue (_, reference)::attvalues) cs =
                         let
                           val entityValue =
-                            case lookupEntity reference of
+                            case lookupEntity refTrace reference of
                                  NONE => ""
                                | SOME fragments =>
                                    let
@@ -491,7 +493,7 @@ structure UXML = struct
                                        | toString (CharFrag charData::fragments) =
                                            charData ^ toString fragments
                                        | toString (EntityRef name::fragments) =
-                                           case lookupEntity name of
+                                       case lookupEntity (reference::refTrace) name of
                                                 NONE => ""
                                               | SOME fragments' =>
                                                   toString fragments' ^ toString fragments
@@ -562,7 +564,7 @@ structure UXML = struct
                           | SOME (#"\010", ins'') => SOME (#"\010", ins'')
                           | SOME _ => SOME (#"\010", ins'))
                    | SOME (c, ins') => SOME (c, ins')
-          val (entityResolver, contents) = parse input1' ins'
+          val (entityResolver, contents) = parse [] input1' ins'
           fun trim [] = []
             | trim (CharData _::contents) = trim contents
             | trim (content::contents) = content::trim contents
@@ -571,25 +573,22 @@ structure UXML = struct
                            name = name,
                            attributes = attributes,
                            contents = List.concat (map (resolveEntity refTrace) contents) }]
-            | resolveEntity refTrace (Reference reference) =
-                if mem (reference, refTrace) then
-                  raise UXML ("WFC: No Recursion", (0, 0))
-                else (
-                  case entityResolver reference of
-                       NONE => []
-                     | SOME fragments =>
-                         let
-                           fun toString [] = ""
-                             | toString (CharFrag charData::fragments) =
-                                 charData ^ toString fragments
-                             | toString (EntityRef name::fragments) =
-                                 "&" ^ name ^ ";" ^ toString fragments
-                         in
-                           List.concat
-                             (map
-                               (resolveEntity (reference::refTrace))
-                               (#2 (parse Substring.getc (Substring.full (toString fragments)))))
-                         end)
+            | resolveEntity refTrace (Reference reference) = (
+                case entityResolver refTrace reference of
+                     NONE => []
+                   | SOME fragments =>
+                       let
+                         fun toString [] = ""
+                           | toString (CharFrag charData::fragments) =
+                               charData ^ toString fragments
+                           | toString (EntityRef name::fragments) =
+                               "&" ^ name ^ ";" ^ toString fragments
+                       in
+                         List.concat
+                           (map
+                             (resolveEntity (reference::refTrace))
+                             (#2 (parse (reference::refTrace) Substring.getc (Substring.full (toString fragments)))))
+                       end)
             | resolveEntity refTrace content = [content]
           val contents = List.concat (map (resolveEntity []) (trim contents))
 
