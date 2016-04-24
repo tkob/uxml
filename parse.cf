@@ -68,7 +68,7 @@ separator EntityValue "" ;
 CharDataAttValue.  AttValue ::= XMLCHARS ;
 CharRefAttValue.   AttValue ::= XMLCHARREF ;
 ReferenceAttValue. AttValue ::= XMLENTITYREF ;
-separator AttValue "" ;
+separator nonempty AttValue "" ;
 
 -- [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
 EmptyComment. Comment ::= LXMLCOMMENT RXMLCOMMENT ;

@@ -130,6 +130,8 @@ SYSTEMID_PUBID
 <STAG>"="  => (EQUAL);
 <STAG>">"  => (YYBEGIN INITIAL; RTAG);
 <STAG>"/>" => (YYBEGIN INITIAL; REMPTYTAG);
+<STAG>"''" => (XMLCHARS(""));
+<STAG>"\"\"" => (XMLCHARS(""));
 <STAG>[\'] => (YYBEGIN ATT_APOS; continue());
 <STAG>[\"] => (YYBEGIN ATT_QUOT; continue());
 <STAG>"/". => (fail yytext yypos (yylineno, yycolno, "STAG"));
