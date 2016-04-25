@@ -209,6 +209,7 @@ SYSTEMID_PUBID
 <ELEMENT_DECL>"*" => (STAR);
 <ELEMENT_DECL>"+" => (PLUS);
 <ELEMENT_DECL>"," => (COMMA);
+<ELEMENT_DECL>. => (fail yytext yypos (yylineno, yycolno, "ELEMENT_DECL"));
 
 <ATTLIST_DECL>">" => (YYBEGIN DOCTYPE; RTAG);
 <ATTLIST_DECL>{xmlS} => (continue());
