@@ -232,6 +232,7 @@ SYSTEMID_PUBID
 <ATTLIST_DECL>"|" => (BAR);
 <ATTLIST_DECL>[\'] => (YYBEGIN ATTLIST_APOS; continue());
 <ATTLIST_DECL>[\"] => (YYBEGIN ATTLIST_QUOT; continue());
+<ATTLIST_DECL>. => (fail yytext yypos (yylineno, yycolno, "ATTLIST_DECL"));
 
 <ATTLIST_QUOT>[^<&"]+ => (XMLCHARS(yytext));
 <ATTLIST_QUOT>{xmlCharRef} => (xmlCharRef yytext yypos (yylineno, yycolno, "ATTLIST_QUOT"));

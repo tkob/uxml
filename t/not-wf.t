@@ -230,6 +230,13 @@ val it = "[1.36] [state=SYSTEMID_PUBID]: unexpected `!'" : string
 val it = "[1.26] [state=ELEMENT_DECL]: unexpected `!'" : string
 ```
 
+## ATTLIST Chars
+
+```
+- parse "<!DOCTYPE doc [<!ATTLIST !>]></doc/>";
+val it = "[1.26] [state=ATTLIST_DECL]: unexpected `!'" : string
+```
+
 ## Element Type Match
 
 ```
