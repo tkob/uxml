@@ -256,6 +256,7 @@ SYSTEMID_PUBID
 <ENTITY_DECL>"%" => (PERCENT);
 <ENTITY_DECL>[\"] => (YYBEGIN ENTITY_VALUE_QUOT; continue());
 <ENTITY_DECL>[\'] => (YYBEGIN ENTITY_VALUE_APOS; continue());
+<ENTITY_DECL>. => (fail yytext yypos (yylineno, yycolno, "ENTITY_DECL"));
 
 <ENTITY_VALUE_QUOT>[^%&"]+ => (XMLCHARS(yytext));
 <ENTITY_VALUE_QUOT>{xmlPEReference} => (xmlPERef yytext);

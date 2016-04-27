@@ -237,6 +237,13 @@ val it = "[1.26] [state=ELEMENT_DECL]: unexpected `!'" : string
 val it = "[1.26] [state=ATTLIST_DECL]: unexpected `!'" : string
 ```
 
+## ENTITY Chars
+
+```
+- parse "<!DOCTYPE doc [<!ENTITY !>]></doc/>";
+val it = "[1.25] [state=ENTITY_DECL]: unexpected `!'" : string
+```
+
 ## Element Type Match
 
 ```
