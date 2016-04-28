@@ -289,6 +289,7 @@ SYSTEMID_PUBID
 <NOTATION_DECL>{xmlName} => (XMLNAME(yytext));
 <NOTATION_DECL>"\"" ([^"])* "\"" => (XMLCHARS(trimQuot yytext));
 <NOTATION_DECL>"'"  ([^'])* "'"  => (XMLCHARS(trimQuot yytext));
+<NOTATION_DECL>. => (fail yytext yypos (yylineno, yycolno, "NOTATION_DECL"));
 
 <DOCTYPE_COMMENT>"-->" => (YYBEGIN DOCTYPE; continue());
 <DOCTYPE_COMMENT>(({xmlChar} & ~"-") | ("-" ({xmlChar} & ~"-")))+ => (continue());
